@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+
+# Virtual environment
+.venv/
+
+# Environment variables
+.env
+*.env
+
+# macOS junk
+.DS_Store
+
+# SQLite DB (local only)
+db.sqlite3
+
+# Hugging Face model downloads
+~/.cache/
+.cache/
+hf_cache/
+transformers_cache/
+
+# Model artifacts
+models/*.joblib
+
+# VSCode
+.vscode/
+
+# Bytecode
+*.pyo
+*.pyd
+
+# Logs
+*.log
+
+# Django static files (if any)
+staticfiles/
