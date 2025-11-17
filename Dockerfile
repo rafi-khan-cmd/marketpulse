@@ -48,6 +48,6 @@ EXPOSE 8000
 ENTRYPOINT ["./docker-entrypoint.sh"]
 
 # Default command (can be overridden)
-# Use PORT environment variable if set (for cloud platforms), otherwise default to 8000
-CMD gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 3 server.wsgi:application
+# Railway sets PORT automatically, use shell to expand it
+CMD sh -c "gunicorn --bind 0.0.0.0:${PORT:-8000} --workers 3 server.wsgi:application"
 
