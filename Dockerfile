@@ -20,8 +20,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # Install Python dependencies (CPU-only PyTorch to save space)
 COPY requirements.txt .
 RUN pip install --no-cache-dir torch==2.3.1 --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir -r requirements.txt && \
-    pip cache purge
+    pip install --no-cache-dir -r requirements.txt
 
 # Copy only necessary project files (excludes docs via .dockerignore)
 COPY . .
