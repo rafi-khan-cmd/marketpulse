@@ -324,7 +324,9 @@ class StatusView(APIView):
             status["database"]["connection"] = "OK"
             db_config = connection.settings_dict
             status["database"]["engine"] = db_config.get("ENGINE", "unknown")
-            status["database"]["name"] = db_config.get("NAME", "unknown")
+            # Convert PosixPath to string for JSON serialization
+            db_name = db_config.get("NAME", "unknown")
+            status["database"]["name"] = str(db_name) if db_name else "unknown"
         except Exception as e:
             status["database"]["connection"] = f"ERROR: {str(e)}"
             status["errors"].append(f"Database connection failed: {str(e)}")
