@@ -13,14 +13,20 @@ ENV PIP_DISABLE_PIP_VERSION_CHECK=1
 RUN apt-get update && apt-get install -y --no-install-recommends \
     postgresql-client \
     cron \
+    build-essential \
+    gcc \
+    g++ \
     && rm -rf /var/lib/apt/lists/* \
     && apt-get clean \
     && rm -rf /tmp/* /var/tmp/*
 
 # Install Python dependencies (CPU-only PyTorch to save space)
 COPY requirements.txt .
-RUN pip install --no-cache-dir torch==2.3.1 --index-url https://download.pytorch.org/whl/cpu && \
-    pip install --no-cache-dir -r requirements.txt
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel && \
+    pip install --no-cache-dir torch==2.3.1 --index-url https://download.pytorch.org/whl/cpu && \
+    pip install --no-cache-dir -r requirements.txt && \
+    apt-get purge -y build-essential gcc g++ && \
+    apt-get autoremove -y
 
 # Copy only necessary project files (excludes docs via .dockerignore)
 COPY . .
