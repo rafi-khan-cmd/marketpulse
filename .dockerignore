@@ -25,4 +25,7 @@ models/*.joblib
 .cache/
 hf_cache/
 transformers_cache/
+# Exclude unnecessary documentation files
+*.md
+!README.md
 
