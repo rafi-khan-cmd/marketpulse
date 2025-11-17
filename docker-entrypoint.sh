@@ -31,7 +31,9 @@ except ImportError:
 END
 
 echo "Running migrations..."
-python manage.py migrate --noinput
+python manage.py migrate --noinput || {
+    echo "WARNING: Migrations failed, but continuing..."
+}
 
 echo "Collecting static files..."
 python manage.py collectstatic --noinput || true
