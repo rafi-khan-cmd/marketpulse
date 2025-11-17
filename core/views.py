@@ -7,6 +7,9 @@ from rest_framework.response import Response
 
 from core.models import Series, Observation, NewsArticle, FeatureFrame
 from ml.predict_spx import predict_latest_spx_direction
+from django.core.management import call_command
+from django.http import StreamingHttpResponse
+import threading
 
 
 class DashboardView(TemplateView):
@@ -292,6 +295,25 @@ class NewsListView(APIView):
                 "articles": articles_data,
             }
         )
+
+
+class UpdateDataView(APIView):
+    """
+    Simple endpoint to trigger data update. Just visit this URL in your browser!
+    """
+    def get(self, request, *args, **kwargs):
+        def run_update():
+            call_command('update_marketpulse')
+        
+        # Run in background thread so it doesn't timeout
+        thread = threading.Thread(target=run_update)
+        thread.daemon = True
+        thread.start()
+        
+        return Response({
+            "status": "started",
+            "message": "Data update started in background. This will take 5-15 minutes. Refresh your dashboard after a few minutes."
+        })
 
 # Helper functions for composite macro metrics
 def _compute_macro_heat_index(snapshot: dict) -> tuple[float | None, str]:

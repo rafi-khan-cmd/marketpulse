@@ -23,6 +23,7 @@ from core.views import (
     TimeSeriesView,
     MacroSnapshotView,
     NewsListView,
+    UpdateDataView,
 )
 
 
@@ -33,4 +34,5 @@ urlpatterns = [
     path("api/timeseries/", TimeSeriesView.as_view(), name="timeseries"),
     path("api/macro-snapshot/", MacroSnapshotView.as_view(), name="macro-snapshot"),
     path("api/news/", NewsListView.as_view(), name="news-list"),
+    path("api/update/", UpdateDataView.as_view(), name="update-data"),
 ]
