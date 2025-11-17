@@ -32,11 +32,14 @@ allowed_hosts_env = os.getenv("ALLOWED_HOSTS", "")
 if allowed_hosts_env:
     ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_env.split(",") if h.strip()]
 else:
-    # Default: allow all hosts when DEBUG=False (for Railway deployment)
-    # In production, Railway sets ALLOWED_HOSTS via environment variable
-    if not DEBUG:
-        ALLOWED_HOSTS = ["*"]  # Allow all hosts in production (Railway handles routing)
+    # Check if we're on Railway (has PORT env var or DATABASE_URL from Railway)
+    is_railway = os.getenv("PORT") is not None or "railway" in os.getenv("DATABASE_URL", "").lower()
+    
+    if is_railway or not DEBUG:
+        # Allow all hosts on Railway or in production (Railway handles routing)
+        ALLOWED_HOSTS = ["*"]
     else:
+        # Local development only
         ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
 
 
