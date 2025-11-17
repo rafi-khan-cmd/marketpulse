@@ -320,17 +320,60 @@ class UpdateDataView(APIView):
     Simple endpoint to trigger data update. Just visit this URL in your browser!
     """
     def get(self, request, *args, **kwargs):
+        import os
+        import logging
+        
+        # Set up logging to stdout so it appears in Railway logs
+        logging.basicConfig(level=logging.INFO)
+        logger = logging.getLogger(__name__)
+        
+        # Check environment variables first
+        missing_vars = []
+        if not os.getenv("FRED_API_KEY"):
+            missing_vars.append("FRED_API_KEY")
+        if not os.getenv("DATABASE_URL"):
+            missing_vars.append("DATABASE_URL")
+        
+        if missing_vars:
+            logger.error(f"Missing environment variables: {', '.join(missing_vars)}")
+            return Response({
+                "status": "error",
+                "message": f"Missing environment variables: {', '.join(missing_vars)}. Check Railway Variables tab.",
+                "missing": missing_vars
+            }, status=400)
+        
         def run_update():
-            call_command('update_marketpulse')
+            try:
+                logger.info("=" * 60)
+                logger.info("STARTING MarketPulse Update")
+                logger.info("=" * 60)
+                logger.info(f"FRED_API_KEY: {'SET' if os.getenv('FRED_API_KEY') else 'MISSING'}")
+                logger.info(f"NEWSAPI_KEY: {'SET' if os.getenv('NEWSAPI_KEY') else 'MISSING (optional)'}")
+                logger.info(f"DATABASE_URL: {'SET' if os.getenv('DATABASE_URL') else 'MISSING'}")
+                
+                # Run the command with verbose output
+                call_command('update_marketpulse', verbosity=2)
+                
+                logger.info("=" * 60)
+                logger.info("MarketPulse Update COMPLETED")
+                logger.info("=" * 60)
+            except Exception as e:
+                logger.error("=" * 60)
+                logger.error("MarketPulse Update FAILED")
+                logger.error("=" * 60)
+                logger.error(f"Error: {str(e)}")
+                import traceback
+                logger.error(traceback.format_exc())
         
         # Run in background thread so it doesn't timeout
         thread = threading.Thread(target=run_update)
-        thread.daemon = True
+        thread.daemon = False  # Don't kill on main thread exit
         thread.start()
         
         return Response({
             "status": "started",
-            "message": "Data update started in background. This will take 5-15 minutes. Refresh your dashboard after a few minutes."
+            "message": "Data update started in background. Check Railway logs (Deployments → View Logs) to see progress. This will take 5-15 minutes.",
+            "check_logs": "Railway Dashboard → Your Service → Deployments → View Logs"
         })
 
 # Helper functions for composite macro metrics
