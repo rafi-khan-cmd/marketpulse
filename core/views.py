@@ -306,11 +306,20 @@ class StatusView(APIView):
         from django.db import connection
         from django.core.exceptions import ImproperlyConfigured
         
+        # Check environment variables - Railway passes them to the container
+        fred_key = os.getenv("FRED_API_KEY", "")
+        newsapi_key = os.getenv("NEWSAPI_KEY", "")
+        db_url = os.getenv("DATABASE_URL", "")
+        
         status = {
             "environment": {
-                "FRED_API_KEY": "SET" if os.getenv("FRED_API_KEY") else "MISSING",
-                "NEWSAPI_KEY": "SET" if os.getenv("NEWSAPI_KEY") else "MISSING (optional)",
-                "DATABASE_URL": "SET" if os.getenv("DATABASE_URL") else "MISSING",
+                "FRED_API_KEY": "SET" if fred_key else "MISSING",
+                "NEWSAPI_KEY": "SET" if newsapi_key else "MISSING (optional)",
+                "DATABASE_URL": "SET" if db_url else "MISSING",
+                # Debug info
+                "FRED_API_KEY_length": len(fred_key) if fred_key else 0,
+                "all_env_vars": {k: "***" if "KEY" in k or "PASSWORD" in k or "SECRET" in k else str(v)[:50] 
+                                for k, v in os.environ.items() if "FRED" in k or "NEWS" in k or "DATABASE" in k or "PORT" in k}
             },
             "database": {},
             "data": {},
