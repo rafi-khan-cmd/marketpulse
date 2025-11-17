@@ -94,7 +94,21 @@ WSGI_APPLICATION = 'server.wsgi.application'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#databases
 
 # Support PostgreSQL via DATABASE_URL or use SQLite as fallback
+# Railway automatically sets DATABASE_URL when PostgreSQL service is added
 DATABASE_URL = os.getenv("DATABASE_URL", "")
+
+# Also check Railway-specific variables (Railway sometimes uses these)
+if not DATABASE_URL:
+    # Check if we're on Railway and try to construct from individual vars
+    pg_host = os.getenv("PGHOST") or os.getenv("POSTGRES_HOST")
+    pg_port = os.getenv("PGPORT") or os.getenv("POSTGRES_PORT", "5432")
+    pg_user = os.getenv("PGUSER") or os.getenv("POSTGRES_USER")
+    pg_password = os.getenv("PGPASSWORD") or os.getenv("POSTGRES_PASSWORD")
+    pg_db = os.getenv("PGDATABASE") or os.getenv("POSTGRES_DB")
+    
+    if pg_host and pg_user and pg_password and pg_db:
+        DATABASE_URL = f"postgresql://{pg_user}:{pg_password}@{pg_host}:{pg_port}/{pg_db}"
+
 if DATABASE_URL:
     # Parse DATABASE_URL (format: postgresql://user:password@host:port/dbname)
     import re

@@ -303,7 +303,8 @@ class StatusView(APIView):
     """
     def get(self, request, *args, **kwargs):
         import os
-        from django.db.models import Count
+        from django.db import connection
+        from django.core.exceptions import ImproperlyConfigured
         
         status = {
             "environment": {
@@ -311,8 +312,23 @@ class StatusView(APIView):
                 "NEWSAPI_KEY": "SET" if os.getenv("NEWSAPI_KEY") else "MISSING (optional)",
                 "DATABASE_URL": "SET" if os.getenv("DATABASE_URL") else "MISSING",
             },
-            "data": {}
+            "database": {},
+            "data": {},
+            "errors": []
         }
+        
+        # Check database connection
+        try:
+            with connection.cursor() as cursor:
+                cursor.execute("SELECT 1")
+            status["database"]["connection"] = "OK"
+            db_config = connection.settings_dict
+            status["database"]["engine"] = db_config.get("ENGINE", "unknown")
+            status["database"]["name"] = db_config.get("NAME", "unknown")
+        except Exception as e:
+            status["database"]["connection"] = f"ERROR: {str(e)}"
+            status["errors"].append(f"Database connection failed: {str(e)}")
+            return Response(status, status=503)
         
         # Check market data
         try:
@@ -322,8 +338,9 @@ class StatusView(APIView):
                 status["data"]["SPX"] = spx_count
             else:
                 status["data"]["SPX"] = 0
-        except:
-            status["data"]["SPX"] = "ERROR"
+        except Exception as e:
+            status["data"]["SPX"] = f"ERROR: {str(e)}"
+            status["errors"].append(f"SPX check failed: {str(e)}")
         
         # Check FRED data
         try:
@@ -333,22 +350,25 @@ class StatusView(APIView):
                 status["data"]["CPI"] = cpi_count
             else:
                 status["data"]["CPI"] = 0
-        except:
-            status["data"]["CPI"] = "ERROR"
+        except Exception as e:
+            status["data"]["CPI"] = f"ERROR: {str(e)}"
+            status["errors"].append(f"CPI check failed: {str(e)}")
         
         # Check features
         try:
             feature_count = FeatureFrame.objects.count()
             status["data"]["FeatureFrame"] = feature_count
-        except:
-            status["data"]["FeatureFrame"] = "ERROR"
+        except Exception as e:
+            status["data"]["FeatureFrame"] = f"ERROR: {str(e)}"
+            status["errors"].append(f"FeatureFrame check failed: {str(e)}")
         
         # Check news
         try:
             news_count = NewsArticle.objects.count()
             status["data"]["News"] = news_count
-        except:
-            status["data"]["News"] = "ERROR"
+        except Exception as e:
+            status["data"]["News"] = f"ERROR: {str(e)}"
+            status["errors"].append(f"News check failed: {str(e)}")
         
         return Response(status)
 
