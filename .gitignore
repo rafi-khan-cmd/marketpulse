@@ -4,6 +4,7 @@ __pycache__/
 
 # Virtual environment
 .venv/
+venv/
 
 # Environment variables
 .env
@@ -33,6 +34,8 @@ models/*.joblib
 
 # Logs
 *.log
+logs/*.log
+!logs/.gitkeep
 
 # Django static files (if any)
 staticfiles/

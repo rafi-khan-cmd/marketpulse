@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: marketpulse
+    env: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    envVars:
+      - key: DJANGO_SECRET_KEY
+        generateValue: true
+      - key: DEBUG
+        value: False
+      - key: ALLOWED_HOSTS
+        value: *.onrender.com
+    healthCheckPath: /dashboard/
+
+databases:
+  - name: marketpulse-db
+    plan: free
+

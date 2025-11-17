@@ -2,290 +2,681 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>MarketPulse Dashboard</title>
-
+    
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
-
-    <!-- Chart.js -->
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    
+    <!-- Chart.js with enhanced plugins -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-gradient@1.0.3/dist/chartjs-plugin-gradient.min.js"></script>
+    
+    <!-- Font Awesome for icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
 
     <style>
+        * {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+        }
+        
         body {
-            background: #f4f5f7;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 0;
+            margin: 0;
         }
+        
+        .dashboard-container {
+            background: rgba(255, 255, 255, 0.05);
+            backdrop-filter: blur(10px);
+            min-height: 100vh;
+            padding: 2rem;
+        }
+        
         .card {
-            background: white;
-            border-radius: 12px;
-            padding: 20px;
-            margin-bottom: 20px;
-            box-shadow: 0 2px 6px rgba(0,0,0,0.05);
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.2);
         }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0, 0, 0, 0.15);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+            padding-bottom: 0.75rem;
+            border-bottom: 2px solid #f0f0f0;
+        }
+        
         .card-title {
             font-size: 1.25rem;
-            font-weight: 600;
+            font-weight: 700;
+            color: #1a202c;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
+        
         .card-sub {
             font-size: 0.875rem;
-            color: #6b7280;
+            color: #718096;
+            margin-top: 0.25rem;
         }
+        
         .metric-row {
             display: flex;
             justify-content: space-between;
-            padding: 6px 0;
-            border-bottom: 1px solid #eee;
+            align-items: center;
+            padding: 0.75rem 0;
+            border-bottom: 1px solid #f0f0f0;
+            transition: background 0.2s;
         }
+        
+        .metric-row:hover {
+            background: rgba(102, 126, 234, 0.05);
+            border-radius: 8px;
+            padding-left: 0.5rem;
+            padding-right: 0.5rem;
+        }
+        
+        .metric-row:last-child {
+            border-bottom: none;
+        }
+        
         .metric-label {
-            color: #555;
+            color: #4a5568;
+            font-size: 0.9rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
+        
         .metric-value {
-            font-weight: 600;
+            font-weight: 700;
+            font-size: 1rem;
+            color: #1a202c;
         }
+        
+        .metric-value.positive {
+            color: #16a34a;
+        }
+        
+        .metric-value.negative {
+            color: #dc2626;
+        }
+        
         .pill {
-            padding: 4px 10px;
-            border-radius: 999px;
+            padding: 0.375rem 0.875rem;
+            border-radius: 9999px;
             font-size: 0.75rem;
+            font-weight: 600;
             color: white;
             white-space: nowrap;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
         }
-        .pill-bullish { background: #16a34a; }
-        .pill-bearish { background: #dc2626; }
-        .pill-neutral { background: #6b7280; }
+        
+        .pill-bullish { 
+            background: linear-gradient(135deg, #16a34a 0%, #15803d 100%);
+        }
+        
+        .pill-bearish { 
+            background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+        }
+        
+        .pill-neutral { 
+            background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%);
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin-bottom: 0.5rem;
+        }
+        
+        .header p {
+            color: #718096;
+            font-size: 1rem;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, rgba(102, 126, 234, 0.1) 0%, rgba(118, 75, 162, 0.1) 100%);
+            border-radius: 16px;
+            padding: 1.5rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .stat-card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 24px rgba(102, 126, 234, 0.2);
+        }
+        
+        .stat-value {
+            font-size: 2rem;
+            font-weight: 800;
+            color: #667eea;
+            margin: 0.5rem 0;
+        }
+        
+        .stat-label {
+            color: #718096;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .news-item {
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 1rem;
+            margin-bottom: 1rem;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+        }
+        
+        .news-item:hover {
+            background: #e9ecef;
+            border-left-color: #667eea;
+            transform: translateX(4px);
+        }
+        
+        .news-item.positive {
+            border-left-color: #16a34a;
+        }
+        
+        .news-item.negative {
+            border-left-color: #dc2626;
+        }
+        
+        .sentiment-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-left: 0.5rem;
+        }
+        
+        .sentiment-positive {
+            background: #d1fae5;
+            color: #065f46;
+        }
+        
+        .sentiment-negative {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+        
+        .sentiment-neutral {
+            background: #e5e7eb;
+            color: #374151;
+        }
+        
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(102, 126, 234, 0.3);
+            border-radius: 50%;
+            border-top-color: #667eea;
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        .fade-in {
+            animation: fadeIn 0.5s ease-in;
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .prediction-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: 20px;
+            padding: 2rem;
+        }
+        
+        .prediction-value {
+            font-size: 3rem;
+            font-weight: 800;
+            margin: 1rem 0;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 300px;
+            margin-top: 1rem;
+        }
+        
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 9999px;
+            overflow: hidden;
+            margin-top: 0.5rem;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 100%);
+            border-radius: 9999px;
+            transition: width 1s ease;
+        }
     </style>
 </head>
-<body class="p-6">
-
-    <h1 class="text-3xl font-bold mb-1">📈 MarketPulse Dashboard</h1>
-    <p class="text-sm text-gray-600 mb-6">
-        Macro × Markets × NLP — live data from FRED, yfinance, NewsAPI and Hugging Face models.
-    </p>
-
-    <!-- ========================================================= -->
-    <!-- ROW 1: Macro snapshot + SPX/VIX main chart                 -->
-    <!-- ========================================================= -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-
-        <!-- MACRO SNAPSHOT CARD -->
-        <div class="card col-span-1">
-            <div class="flex justify-between items-center mb-4">
+<body>
+    <div class="dashboard-container">
+        <!-- Header -->
+        <div class="header fade-in">
+            <div class="flex justify-between items-center">
                 <div>
-                    <div class="card-title">Macro Snapshot</div>
-                    <div class="card-sub">Latest economic indicators</div>
+                    <h1><i class="fas fa-chart-line"></i> MarketPulse</h1>
+                    <p>Real-time financial market analysis powered by ML & NLP</p>
                 </div>
-                <span id="regimePill" class="pill pill-neutral">Regime: —</span>
-            </div>
-
-            <div class="metric-row">
-                <span class="metric-label">Inflation (CPI YoY)</span>
-                <span id="macroCPI" class="metric-value">—</span>
-            </div>
-
-            <div class="metric-row">
-                <span class="metric-label">Unemployment rate</span>
-                <span id="macroUnemp" class="metric-value">—</span>
-            </div>
-
-            <div class="metric-row">
-                <span class="metric-label">10Y / 2Y yields</span>
-                <span id="macroYields" class="metric-value">—</span>
-            </div>
-
-            <div class="metric-row">
-                <span class="metric-label">VIX level</span>
-                <span id="macroVix" class="metric-value">—</span>
-            </div>
-
-            <div class="metric-row">
-                <span class="metric-label">S&P Drawdown</span>
-                <span id="macroDrawdown" class="metric-value">—</span>
-            </div>
-
-            <!-- Composite metrics -->
-            <div class="metric-row">
-                <span class="metric-label">Macro Heat Index</span>
-                <span id="macroHeatIndex" class="metric-value">—</span>
-            </div>
-
-            <div class="metric-row">
-                <span class="metric-label">Risk Barometer</span>
-                <span id="riskBarometer" class="metric-value">—</span>
-            </div>
-
-            <p id="macroDate" class="text-xs text-gray-500 mt-3">As of —</p>
-        </div>
-
-        <!-- MAIN CHART: SPX + VIX -->
-        <div class="card col-span-2">
-            <div class="flex justify-between items-center mb-2">
-                <div>
-                    <div class="card-title">Market Trends</div>
-                    <div class="card-sub">S&amp;P 500 vs VIX (volatility)</div>
+                <div class="flex gap-4">
+                    <div class="stat-card">
+                        <div class="stat-label">Data Sources</div>
+                        <div class="stat-value">3</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">ML Models</div>
+                        <div class="stat-value">2</div>
+                    </div>
                 </div>
             </div>
-            <canvas id="chartSPX"></canvas>
-        </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- ROW 2: Macro detail charts                                 -->
-    <!-- ========================================================= -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-
-        <!-- CPI & Core CPI -->
-        <div class="card">
-            <div class="card-title mb-2">Inflation – CPI vs Core</div>
-            <div class="card-sub mb-2">Headline vs core price index levels</div>
-            <canvas id="chartCPI"></canvas>
         </div>
 
-        <!-- Unemployment & Jobless claims -->
-        <div class="card">
-            <div class="card-title mb-2">Labour Market</div>
-            <div class="card-sub mb-2">Unemployment vs jobless claims</div>
-            <canvas id="chartLabour"></canvas>
-        </div>
-
-        <!-- Fed Funds Rate & 10Y -->
-        <div class="card">
-            <div class="card-title mb-2">Rates – FFR vs 10Y</div>
-            <div class="card-sub mb-2">Policy rate vs long-term yield</div>
-            <canvas id="chartRates"></canvas>
-        </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- ROW 3: Yield curve, SPX vs volume, VIX detail              -->
-    <!-- ========================================================= -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-
-        <!-- 10Y - 2Y term spread -->
-        <div class="card">
-            <div class="card-title mb-2">Yield Curve (10Y – 2Y)</div>
-            <div class="card-sub mb-2">Inversions often precede recessions</div>
-            <canvas id="chartTermSpread"></canvas>
-        </div>
-
-        <!-- SPX vs SPY volume -->
-        <div class="card">
-            <div class="card-title mb-2">S&amp;P vs SPY Volume</div>
-            <div class="card-sub mb-2">Price action with trading activity</div>
-            <canvas id="chartSPXVolume"></canvas>
-        </div>
-
-        <!-- VIX detail -->
-        <div class="card">
-            <div class="card-title mb-2">VIX (Fear Index)</div>
-            <div class="card-sub mb-2">Volatility in isolation</div>
-            <canvas id="chartVIX"></canvas>
-        </div>
-    </div>
-
-    <!-- ========================================================= -->
-    <!-- ROW 4: News + SPX prediction                               -->
-    <!-- ========================================================= -->
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-6">
-
-        <!-- NEWS + NLP -->
-        <div class="card md:col-span-2">
-            <div class="flex justify-between items-center mb-2">
-                <div>
-                    <div class="card-title">Market News</div>
-                    <div class="card-sub">Top headlines with sentiment &amp; topics</div>
-                </div>
-            </div>
-            <div id="newsList" class="space-y-3 text-sm max-h-[500px] overflow-y-auto"></div>
-        </div>
-
-        <!-- SPX DIRECTION MODEL -->
-        <div class="card">
-            <div class="card-title mb-2">SPX Direction Model</div>
-            <div class="card-sub mb-4">Next-day directional probability</div>
-
-            <div class="space-y-3">
-                <div class="metric-row">
-                    <span class="metric-label">Model Probability (Up)</span>
-                    <span id="predProb" class="metric-value">—</span>
+        <!-- Row 1: Macro Snapshot + Main Chart -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- Macro Snapshot Card -->
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <i class="fas fa-globe-americas"></i>
+                            Macro Snapshot
+                        </div>
+                        <div class="card-sub">Latest economic indicators</div>
+                    </div>
+                    <span id="regimePill" class="pill pill-neutral">—</span>
                 </div>
 
                 <div class="metric-row">
-                    <span class="metric-label">Signal</span>
-                    <span id="predLabel" class="metric-value">—</span>
+                    <span class="metric-label">
+                        <i class="fas fa-chart-line text-purple-500"></i>
+                        Inflation (CPI YoY)
+                    </span>
+                    <span id="macroCPI" class="metric-value">—</span>
                 </div>
 
                 <div class="metric-row">
-                    <span class="metric-label">For date</span>
-                    <span id="predDate" class="metric-value">—</span>
+                    <span class="metric-label">
+                        <i class="fas fa-users text-blue-500"></i>
+                        Unemployment
+                    </span>
+                    <span id="macroUnemp" class="metric-value">—</span>
+                </div>
+
+                <div class="metric-row">
+                    <span class="metric-label">
+                        <i class="fas fa-percent text-green-500"></i>
+                        10Y / 2Y Yields
+                    </span>
+                    <span id="macroYields" class="metric-value">—</span>
+                </div>
+
+                <div class="metric-row">
+                    <span class="metric-label">
+                        <i class="fas fa-exclamation-triangle text-red-500"></i>
+                        VIX Level
+                    </span>
+                    <span id="macroVix" class="metric-value">—</span>
+                </div>
+
+                <div class="metric-row">
+                    <span class="metric-label">
+                        <i class="fas fa-arrow-down text-orange-500"></i>
+                        S&P Drawdown
+                    </span>
+                    <span id="macroDrawdown" class="metric-value">—</span>
+                </div>
+
+                <div class="metric-row">
+                    <span class="metric-label">
+                        <i class="fas fa-fire text-red-500"></i>
+                        Macro Heat Index
+                    </span>
+                    <span id="macroHeatIndex" class="metric-value">—</span>
+                </div>
+
+                <div class="metric-row">
+                    <span class="metric-label">
+                        <i class="fas fa-shield-alt text-indigo-500"></i>
+                        Risk Barometer
+                    </span>
+                    <span id="riskBarometer" class="metric-value">—</span>
+                </div>
+
+                <p id="macroDate" class="text-xs text-gray-500 mt-4 text-center">
+                    <i class="fas fa-clock"></i> As of —
+                </p>
+            </div>
+
+            <!-- Main Chart: SPX + VIX -->
+            <div class="card md:col-span-2 fade-in">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <i class="fas fa-chart-area"></i>
+                            Market Trends
+                        </div>
+                        <div class="card-sub">S&P 500 vs VIX (volatility)</div>
+                    </div>
+                </div>
+                <div class="chart-container">
+                    <canvas id="chartSPX"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 2: Detail Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <i class="fas fa-dollar-sign"></i>
+                            Inflation
+                        </div>
+                        <div class="card-sub">CPI vs Core CPI</div>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="chartCPI"></canvas>
                 </div>
             </div>
 
-            <p class="text-xs text-gray-500 mt-3">
-                Logistic regression on macro + market features from your FeatureFrame table.
-            </p>
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <i class="fas fa-briefcase"></i>
+                            Labour Market
+                        </div>
+                        <div class="card-sub">Unemployment vs Claims</div>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="chartLabour"></canvas>
+                </div>
+            </div>
+
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <i class="fas fa-percentage"></i>
+                            Interest Rates
+                        </div>
+                        <div class="card-sub">FFR vs 10Y Yield</div>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="chartRates"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 3: More Charts -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <i class="fas fa-chart-line"></i>
+                            Yield Curve
+                        </div>
+                        <div class="card-sub">10Y – 2Y Spread</div>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="chartTermSpread"></canvas>
+                </div>
+            </div>
+
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <i class="fas fa-chart-bar"></i>
+                            Volume Analysis
+                        </div>
+                        <div class="card-sub">S&P vs SPY Volume</div>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="chartSPXVolume"></canvas>
+                </div>
+            </div>
+
+            <div class="card fade-in">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <i class="fas fa-exclamation-circle"></i>
+                            VIX Detail
+                        </div>
+                        <div class="card-sub">Fear Index</div>
+                    </div>
+                </div>
+                <div class="chart-container" style="height: 250px;">
+                    <canvas id="chartVIX"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Row 4: News + Prediction -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+            <!-- News Feed -->
+            <div class="card md:col-span-2 fade-in">
+                <div class="card-header">
+                    <div>
+                        <div class="card-title">
+                            <i class="fas fa-newspaper"></i>
+                            Market News
+                        </div>
+                        <div class="card-sub">Latest headlines with sentiment analysis</div>
+                    </div>
+                </div>
+                <div id="newsList" class="max-h-[600px] overflow-y-auto pr-2" style="scrollbar-width: thin;"></div>
+            </div>
+
+            <!-- Prediction Card -->
+            <div class="prediction-card fade-in">
+                <div class="text-center">
+                    <div class="card-title text-white mb-4">
+                        <i class="fas fa-brain"></i>
+                        ML Prediction
+                    </div>
+                    <div class="text-sm opacity-90 mb-6">Next-day SPX direction probability</div>
+                    
+                    <div class="prediction-value" id="predProb">—</div>
+                    <div class="text-2xl font-bold mb-4" id="predLabel">—</div>
+                    
+                    <div class="progress-bar bg-white bg-opacity-20">
+                        <div class="progress-fill" id="progressBar" style="width: 0%"></div>
+                    </div>
+                    
+                    <div class="mt-6 text-sm opacity-75">
+                        <i class="fas fa-calendar"></i> <span id="predDate">—</span>
+                    </div>
+                    
+                    <div class="mt-4 text-xs opacity-60">
+                        Logistic regression model trained on macro + market features
+                    </div>
+                </div>
+            </div>
         </div>
     </div>
 
-    <!-- ========================================================= -->
-    <!-- JAVASCRIPT                                                 -->
-    <!-- ========================================================= -->
     <script>
-        // --------------------------------------------------------------------
-        // 1) MACRO SNAPSHOT
-        // --------------------------------------------------------------------
+        // Chart.js default configuration
+        Chart.defaults.font.family = "'Inter', sans-serif";
+        Chart.defaults.font.size = 12;
+        Chart.defaults.color = '#4a5568';
+        Chart.defaults.plugins.legend.display = true;
+        Chart.defaults.plugins.legend.position = 'top';
+        Chart.defaults.elements.point.radius = 0;
+        Chart.defaults.elements.point.hoverRadius = 6;
+        Chart.defaults.elements.line.tension = 0.4;
+        Chart.defaults.elements.line.borderWidth = 2.5;
+
+        // Helper function to intelligently downsample data for display
+        // while preserving all data points for accuracy
+        function downsampleForDisplay(data, maxPoints = 2000) {
+            if (data.length <= maxPoints) return data;
+            
+            // Downsample by taking every Nth point
+            const step = Math.ceil(data.length / maxPoints);
+            const downsampled = [];
+            for (let i = 0; i < data.length; i += step) {
+                downsampled.push(data[i]);
+            }
+            // Always include the last point
+            if (downsampled[downsampled.length - 1] !== data[data.length - 1]) {
+                downsampled.push(data[data.length - 1]);
+            }
+            return downsampled;
+        }
+
+        const chartOptions = {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        usePointStyle: true,
+                        padding: 15,
+                        font: { size: 12, weight: '600' }
+                    }
+                },
+                tooltip: {
+                    backgroundColor: 'rgba(0, 0, 0, 0.8)',
+                    padding: 12,
+                    titleFont: { size: 14, weight: '600' },
+                    bodyFont: { size: 12 },
+                    borderColor: 'rgba(255, 255, 255, 0.1)',
+                    borderWidth: 1,
+                    cornerRadius: 8
+                }
+            },
+            scales: {
+                x: {
+                    grid: { display: false },
+                    ticks: { 
+                        maxTicksLimit: 12,
+                        autoSkip: true,
+                        maxRotation: 45,
+                        minRotation: 0
+                    }
+                },
+                y: {
+                    grid: { color: 'rgba(0, 0, 0, 0.05)' },
+                    ticks: { 
+                        callback: function(value) {
+                            return typeof value === 'number' ? value.toLocaleString() : value;
+                        }
+                    }
+                }
+            },
+            // Performance optimization for large datasets
+            elements: {
+                point: {
+                    radius: 0,
+                    hoverRadius: 4
+                },
+                line: {
+                    borderWidth: 2
+                }
+            }
+        };
+
+        // Load Macro Snapshot
         async function loadMacroSnapshot() {
             try {
                 const payload = await fetch("/api/macro-snapshot/").then(r => r.json());
 
-                document.getElementById("macroCPI").textContent =
-                    payload.cpi_yoy != null ? `${payload.cpi_yoy.toFixed(1)}%` : "—";
+                const setMetric = (id, value, format = (v) => v) => {
+                    const el = document.getElementById(id);
+                    if (el) el.textContent = value != null ? format(value) : "—";
+                };
 
-                document.getElementById("macroUnemp").textContent =
-                    payload.unemp_rate != null ? `${payload.unemp_rate.toFixed(1)}%` : "—";
+                setMetric("macroCPI", payload.cpi_yoy, v => `${v.toFixed(1)}%`);
+                setMetric("macroUnemp", payload.unemp_rate, v => `${v.toFixed(1)}%`);
+                setMetric("macroYields", 
+                    (payload.us10y != null && payload.us2y != null) 
+                        ? `${payload.us10y.toFixed(2)}% / ${payload.us2y.toFixed(2)}%` 
+                        : null
+                );
+                setMetric("macroVix", payload.vix, v => v.toFixed(1));
+                setMetric("macroDrawdown", payload.spx_drawdown, v => `${(v * 100).toFixed(1)}%`);
 
-                document.getElementById("macroYields").textContent =
-                    (payload.us10y != null && payload.us2y != null)
-                        ? `${payload.us10y.toFixed(2)}% / ${payload.us2y.toFixed(2)}%`
-                        : "—";
-
-                document.getElementById("macroVix").textContent =
-                    payload.vix != null ? payload.vix.toFixed(1) : "—";
-
-                document.getElementById("macroDrawdown").textContent =
-                    payload.spx_drawdown != null
-                        ? `${(payload.spx_drawdown * 100).toFixed(1)}%`
-                        : "—";
-
-                // Macro Heat Index
                 const heatScore = payload.macro_heat_index;
                 const heatLabel = payload.macro_heat_label || "";
-                if (heatScore != null) {
-                    document.getElementById("macroHeatIndex").textContent =
-                        `${heatScore.toFixed(1)} (${heatLabel})`;
-                } else {
-                    document.getElementById("macroHeatIndex").textContent = "—";
-                }
+                setMetric("macroHeatIndex", heatScore != null ? `${heatScore.toFixed(1)} (${heatLabel})` : null);
 
-                // Risk Barometer
                 const riskScore = payload.risk_barometer_score;
                 const riskLabel = payload.risk_barometer_label || "";
-                if (riskScore != null) {
-                    document.getElementById("riskBarometer").textContent =
-                        `${riskScore.toFixed(1)} (${riskLabel})`;
-                } else {
-                    document.getElementById("riskBarometer").textContent = "—";
-                }
+                setMetric("riskBarometer", riskScore != null ? `${riskScore.toFixed(1)} (${riskLabel})` : null);
 
                 const dateStr = payload.as_of || payload.date || null;
                 if (dateStr) {
-                    document.getElementById("macroDate").textContent = `As of ${dateStr}`;
+                    setMetric("macroDate", `As of ${dateStr}`);
                 }
 
                 const pill = document.getElementById("regimePill");
                 const regime = (payload.regime_label || "Unknown").toLowerCase();
-
                 pill.classList.remove("pill-bullish", "pill-bearish", "pill-neutral");
-                if (regime.includes("risk_on")) {
+                if (regime.includes("risk_on") || regime.includes("bull")) {
                     pill.classList.add("pill-bullish");
-                } else if (regime.includes("risk_off") || regime.includes("stress")) {
+                } else if (regime.includes("risk_off") || regime.includes("stress") || regime.includes("bear")) {
                     pill.classList.add("pill-bearish");
                 } else {
                     pill.classList.add("pill-neutral");
@@ -296,43 +687,54 @@
             }
         }
 
-        // --------------------------------------------------------------------
-        // 2) SPX + VIX main chart
-        // --------------------------------------------------------------------
+        // Load SPX + VIX Chart
         async function loadSPXVixChart() {
             try {
-                const spx = await fetch("/api/timeseries/?code=SPX_CLOSE").then(r => r.json());
-                const vix = await fetch("/api/timeseries/?code=VIX").then(r => r.json());
+                const [spx, vix] = await Promise.all([
+                    fetch("/api/timeseries/?code=SPX_CLOSE").then(r => r.json()),
+                    fetch("/api/timeseries/?code=VIX").then(r => r.json())
+                ]);
 
-                const dates = spx.data.map(d => d.date);
-
+                // Use all data points (downsampled for display if needed for performance)
+                const spxData = spx.data || [];
+                const vixData = vix.data || [];
+                
+                // Downsample for display if dataset is very large (>2000 points)
+                const displaySpx = downsampleForDisplay(spxData);
+                const displayVix = downsampleForDisplay(vixData);
+                
+                const dates = displaySpx.map(d => d.date);
                 const ctx = document.getElementById("chartSPX").getContext("2d");
+
                 new Chart(ctx, {
                     type: "line",
                     data: {
                         labels: dates,
                         datasets: [
                             {
-                                label: "S&P 500",
-                                data: spx.data.map(d => d.value),
-                                borderColor: "#2563eb",
-                                borderWidth: 2,
+                                label: `S&P 500 (${spx.count} data points)`,
+                                data: displaySpx.map(d => d.value),
+                                borderColor: "#667eea",
+                                backgroundColor: "rgba(102, 126, 234, 0.1)",
+                                fill: true,
                                 yAxisID: "y",
                             },
                             {
-                                label: "VIX",
-                                data: vix.data.map(d => d.value),
+                                label: `VIX (${vix.count} data points)`,
+                                data: displayVix.map(d => d.value),
                                 borderColor: "#dc2626",
-                                borderWidth: 1,
+                                backgroundColor: "rgba(220, 38, 38, 0.1)",
+                                fill: true,
                                 yAxisID: "y1",
                             }
                         ]
                     },
                     options: {
-                        responsive: true,
+                        ...chartOptions,
                         scales: {
-                            y: { position: "left" },
-                            y1: { position: "right" }
+                            ...chartOptions.scales,
+                            y: { position: "left", ...chartOptions.scales.y },
+                            y1: { position: "right", ...chartOptions.scales.y, grid: { display: false } }
                         }
                     }
                 });
@@ -341,85 +743,97 @@
             }
         }
 
-        // --------------------------------------------------------------------
-        // 3) CPI & Core CPI
-        // --------------------------------------------------------------------
+        // Load CPI Chart
         async function loadCPIChart() {
             try {
-                const cpi = await fetch("/api/timeseries/?code=CPI").then(r => r.json());
-                const core = await fetch("/api/timeseries/?code=CoreCPI").then(r => r.json());
+                const [cpi, core] = await Promise.all([
+                    fetch("/api/timeseries/?code=CPI").then(r => r.json()),
+                    fetch("/api/timeseries/?code=CoreCPI").then(r => r.json())
+                ]);
 
-                const dates = cpi.data.map(d => d.date);
-
+                // Use all available data (downsampled for display if needed)
+                const cpiData = cpi.data || [];
+                const coreData = core.data || [];
+                const displayCpi = downsampleForDisplay(cpiData);
+                const displayCore = downsampleForDisplay(coreData);
+                
+                const dates = displayCpi.map(d => d.date);
                 const ctx = document.getElementById("chartCPI").getContext("2d");
+
                 new Chart(ctx, {
                     type: "line",
                     data: {
                         labels: dates,
                         datasets: [
                             {
-                                label: "CPI",
-                                data: cpi.data.map(d => d.value),
+                                label: `CPI (${cpi.count} data points)`,
+                                data: displayCpi.map(d => d.value),
                                 borderColor: "#7c3aed",
-                                borderWidth: 2,
+                                backgroundColor: "rgba(124, 58, 237, 0.1)",
+                                fill: true,
                             },
                             {
-                                label: "Core CPI",
-                                data: core.data.map(d => d.value),
+                                label: `Core CPI (${core.count} data points)`,
+                                data: displayCore.map(d => d.value),
                                 borderColor: "#10b981",
-                                borderWidth: 2,
+                                backgroundColor: "rgba(16, 185, 129, 0.1)",
+                                fill: true,
                             }
                         ]
                     },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: { title: { display: true, text: "Index level" } }
-                        }
-                    }
+                    options: chartOptions
                 });
             } catch (err) {
                 console.error("CPI chart error:", err);
             }
         }
 
-        // --------------------------------------------------------------------
-        // 4) Labour market: Unemployment & JoblessClaims
-        // --------------------------------------------------------------------
+        // Load Labour Chart
         async function loadLabourChart() {
             try {
-                const unemp = await fetch("/api/timeseries/?code=Unemployment").then(r => r.json());
-                const claims = await fetch("/api/timeseries/?code=JoblessClaims").then(r => r.json());
+                const [unemp, claims] = await Promise.all([
+                    fetch("/api/timeseries/?code=Unemployment").then(r => r.json()),
+                    fetch("/api/timeseries/?code=JoblessClaims").then(r => r.json())
+                ]);
 
-                const dates = unemp.data.map(d => d.date);
-
+                // Use all available data
+                const unempData = unemp.data || [];
+                const claimsData = claims.data || [];
+                const displayUnemp = downsampleForDisplay(unempData);
+                const displayClaims = downsampleForDisplay(claimsData);
+                
+                const dates = displayUnemp.map(d => d.date);
                 const ctx = document.getElementById("chartLabour").getContext("2d");
+
                 new Chart(ctx, {
                     type: "line",
                     data: {
                         labels: dates,
                         datasets: [
                             {
-                                label: "Unemployment (%)",
-                                data: unemp.data.map(d => d.value),
+                                label: `Unemployment (${unemp.count} data points)`,
+                                data: displayUnemp.map(d => d.value),
                                 borderColor: "#16a34a",
-                                borderWidth: 2,
+                                backgroundColor: "rgba(22, 163, 74, 0.1)",
+                                fill: true,
                                 yAxisID: "y",
                             },
                             {
-                                label: "Jobless claims",
-                                data: claims.data.map(d => d.value),
+                                label: `Jobless Claims (${claims.count} data points)`,
+                                data: displayClaims.map(d => d.value),
                                 borderColor: "#f97316",
-                                borderWidth: 1.5,
+                                backgroundColor: "rgba(249, 115, 22, 0.1)",
+                                fill: true,
                                 yAxisID: "y1",
                             }
                         ]
                     },
                     options: {
-                        responsive: true,
+                        ...chartOptions,
                         scales: {
-                            y: { position: "left", title: { display: true, text: "%" } },
-                            y1: { position: "right", title: { display: true, text: "Claims" } }
+                            ...chartOptions.scales,
+                            y: { position: "left", ...chartOptions.scales.y },
+                            y1: { position: "right", ...chartOptions.scales.y, grid: { display: false } }
                         }
                     }
                 });
@@ -428,126 +842,149 @@
             }
         }
 
-        // --------------------------------------------------------------------
-        // 5) Rates: FFR vs 10Y
-        // --------------------------------------------------------------------
+        // Load Rates Chart
         async function loadRatesChart() {
             try {
-                const ffr = await fetch("/api/timeseries/?code=FFR").then(r => r.json());
-                const us10y = await fetch("/api/timeseries/?code=US10Y").then(r => r.json());
+                const [ffr, us10y] = await Promise.all([
+                    fetch("/api/timeseries/?code=FFR").then(r => r.json()),
+                    fetch("/api/timeseries/?code=US10Y").then(r => r.json())
+                ]);
 
-                const dates = ffr.data.map(d => d.date);
-
+                // Use all available data
+                const ffrData = ffr.data || [];
+                const us10yData = us10y.data || [];
+                const displayFfr = downsampleForDisplay(ffrData);
+                const displayUs10y = downsampleForDisplay(us10yData);
+                
+                const dates = displayFfr.map(d => d.date);
                 const ctx = document.getElementById("chartRates").getContext("2d");
+
                 new Chart(ctx, {
                     type: "line",
                     data: {
                         labels: dates,
                         datasets: [
                             {
-                                label: "Fed Funds Rate",
-                                data: ffr.data.map(d => d.value),
+                                label: `Fed Funds Rate (${ffr.count} data points)`,
+                                data: displayFfr.map(d => d.value),
                                 borderColor: "#0f766e",
-                                borderWidth: 2,
+                                backgroundColor: "rgba(15, 118, 110, 0.1)",
+                                fill: true,
                             },
                             {
-                                label: "10Y yield",
-                                data: us10y.data.map(d => d.value),
+                                label: `10Y Yield (${us10y.count} data points)`,
+                                data: displayUs10y.map(d => d.value),
                                 borderColor: "#f97316",
-                                borderWidth: 2,
+                                backgroundColor: "rgba(249, 115, 22, 0.1)",
+                                fill: true,
                             }
                         ]
                     },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: { title: { display: true, text: "%" } }
-                        }
-                    }
+                    options: chartOptions
                 });
             } catch (err) {
                 console.error("Rates chart error:", err);
             }
         }
 
-        // --------------------------------------------------------------------
-        // 6) Yield curve (10Y – 2Y)
-        // --------------------------------------------------------------------
+        // Load Term Spread Chart
         async function loadTermSpreadChart() {
             try {
-                const us10y = await fetch("/api/timeseries/?code=US10Y").then(r => r.json());
-                const us2y = await fetch("/api/timeseries/?code=US2Y").then(r => r.json());
+                const [us10y, us2y] = await Promise.all([
+                    fetch("/api/timeseries/?code=US10Y").then(r => r.json()),
+                    fetch("/api/timeseries/?code=US2Y").then(r => r.json())
+                ]);
 
-                const dates = us10y.data.map(d => d.date);
-                const spread = us10y.data.map((d, i) => {
+                // Calculate spread using all available data
+                const us10yData = us10y.data || [];
+                const us2yData = us2y.data || [];
+                
+                // Create a map for efficient lookup
+                const us2yMap = new Map(us2yData.map(d => [d.date, d.value]));
+                
+                // Calculate spread for all dates
+                const spread = us10yData.map(d => {
                     const v10 = d.value;
-                    const v2 = us2y.data[i] ? us2y.data[i].value : null;
-                    return (v10 != null && v2 != null) ? (v10 - v2) : null;
-                });
+                    const v2 = us2yMap.get(d.date);
+                    return {
+                        date: d.date,
+                        value: (v10 != null && v2 != null) ? (v10 - v2) * 100 : null
+                    };
+                }).filter(d => d.value != null);
+                
+                // Downsample for display
+                const displaySpread = downsampleForDisplay(spread);
+                const dates = displaySpread.map(d => d.date);
 
                 const ctx = document.getElementById("chartTermSpread").getContext("2d");
+
                 new Chart(ctx, {
                     type: "line",
                     data: {
                         labels: dates,
                         datasets: [
                             {
-                                label: "10Y – 2Y (bps)",
-                                data: spread.map(x => x != null ? x * 100 : null),
+                                label: `10Y – 2Y Spread (${spread.length} calculated points)`,
+                                data: displaySpread.map(d => d.value),
                                 borderColor: "#f59e0b",
-                                borderWidth: 2,
+                                backgroundColor: "rgba(245, 158, 11, 0.1)",
+                                fill: true,
                             }
                         ]
                     },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: { title: { display: true, text: "bps" } }
-                        }
-                    }
+                    options: chartOptions
                 });
             } catch (err) {
                 console.error("Term spread chart error:", err);
             }
         }
 
-        // --------------------------------------------------------------------
-        // 7) SPX vs SPY volume
-        // --------------------------------------------------------------------
+        // Load SPX Volume Chart
         async function loadSPXVolumeChart() {
             try {
-                const spx = await fetch("/api/timeseries/?code=SPX_CLOSE").then(r => r.json());
-                const vol = await fetch("/api/timeseries/?code=SPY_VOLUME").then(r => r.json());
+                const [spx, vol] = await Promise.all([
+                    fetch("/api/timeseries/?code=SPX_CLOSE").then(r => r.json()),
+                    fetch("/api/timeseries/?code=SPY_VOLUME").then(r => r.json())
+                ]);
 
-                const dates = spx.data.map(d => d.date);
-
+                // Use all available data
+                const spxData = spx.data || [];
+                const volData = vol.data || [];
+                const displaySpx = downsampleForDisplay(spxData);
+                const displayVol = downsampleForDisplay(volData);
+                
+                const dates = displaySpx.map(d => d.date);
                 const ctx = document.getElementById("chartSPXVolume").getContext("2d");
+
                 new Chart(ctx, {
                     type: "line",
                     data: {
                         labels: dates,
                         datasets: [
                             {
-                                label: "S&P 500",
-                                data: spx.data.map(d => d.value),
-                                borderColor: "#2563eb",
-                                borderWidth: 2,
+                                label: `S&P 500 (${spx.count} data points)`,
+                                data: displaySpx.map(d => d.value),
+                                borderColor: "#667eea",
+                                backgroundColor: "rgba(102, 126, 234, 0.1)",
+                                fill: true,
                                 yAxisID: "y",
                             },
                             {
-                                label: "SPY volume",
-                                data: vol.data.map(d => d.value),
+                                label: `SPY Volume (${vol.count} data points)`,
+                                data: displayVol.map(d => d.value),
                                 borderColor: "#64748b",
-                                borderWidth: 1.5,
+                                backgroundColor: "rgba(100, 116, 139, 0.1)",
+                                fill: true,
                                 yAxisID: "y1",
                             }
                         ]
                     },
                     options: {
-                        responsive: true,
+                        ...chartOptions,
                         scales: {
-                            y: { position: "left" },
-                            y1: { position: "right", title: { display: true, text: "Volume" } }
+                            ...chartOptions.scales,
+                            y: { position: "left", ...chartOptions.scales.y },
+                            y1: { position: "right", ...chartOptions.scales.y, grid: { display: false } }
                         }
                     }
                 });
@@ -556,58 +993,61 @@
             }
         }
 
-        // --------------------------------------------------------------------
-        // 8) VIX detail
-        // --------------------------------------------------------------------
+        // Load VIX Chart
         async function loadVixChart() {
             try {
                 const vix = await fetch("/api/timeseries/?code=VIX").then(r => r.json());
-
+                
+                // Use all available data
+                const vixData = vix.data || [];
+                const displayVix = downsampleForDisplay(vixData);
+                
                 const ctx = document.getElementById("chartVIX").getContext("2d");
+
                 new Chart(ctx, {
                     type: "line",
                     data: {
-                        labels: vix.data.map(d => d.date),
+                        labels: displayVix.map(d => d.date),
                         datasets: [
                             {
-                                label: "VIX",
-                                data: vix.data.map(d => d.value),
+                                label: `VIX (${vix.count} data points)`,
+                                data: displayVix.map(d => d.value),
                                 borderColor: "#dc2626",
-                                borderWidth: 2,
+                                backgroundColor: "rgba(220, 38, 38, 0.1)",
+                                fill: true,
                             }
                         ]
                     },
-                    options: {
-                        responsive: true,
-                        scales: {
-                            y: { title: { display: true, text: "Index level" } }
-                        }
-                    }
+                    options: chartOptions
                 });
             } catch (err) {
                 console.error("VIX chart error:", err);
             }
         }
 
-        // --------------------------------------------------------------------
-        // 9) SPX direction model
-        // --------------------------------------------------------------------
+        // Load Prediction
         async function loadPrediction() {
             try {
                 const p = await fetch("/api/spx-direction/").then(r => r.json());
+                
                 document.getElementById("predDate").textContent = p.date || "—";
-                document.getElementById("predProb").textContent =
-                    p.prob_up != null ? `${(p.prob_up * 100).toFixed(1)}%` : "—";
-                document.getElementById("predLabel").textContent =
-                    p.label === 1 ? "UP" : (p.label === 0 ? "DOWN" : "—");
+                
+                const prob = p.prob_up != null ? (p.prob_up * 100) : null;
+                if (prob != null) {
+                    document.getElementById("predProb").textContent = `${prob.toFixed(1)}%`;
+                    document.getElementById("progressBar").style.width = `${prob}%`;
+                } else {
+                    document.getElementById("predProb").textContent = "—";
+                }
+                
+                const label = p.label === 1 ? "UP ⬆️" : (p.label === 0 ? "DOWN ⬇️" : "—");
+                document.getElementById("predLabel").textContent = label;
             } catch (err) {
                 console.error("Prediction error:", err);
             }
         }
 
-        // --------------------------------------------------------------------
-        // 10) News + NLP
-        // --------------------------------------------------------------------
+        // Load News
         async function loadNews() {
             try {
                 const n = await fetch("/api/news/?limit=12").then(r => r.json());
@@ -616,27 +1056,33 @@
 
                 (n.articles || []).forEach(a => {
                     const item = document.createElement("div");
-                    item.className = "p-2 border rounded";
-
-                    const sentimentScore = a.sentiment_score != null
-                        ? a.sentiment_score.toFixed(2)
-                        : "—";
+                    const sentiment = (a.sentiment_label || "").toUpperCase();
+                    const sentimentClass = sentiment.includes("POSITIVE") ? "positive" : 
+                                         sentiment.includes("NEGATIVE") ? "negative" : "";
+                    
+                    item.className = `news-item ${sentimentClass}`;
+                    
+                    const sentimentBadgeClass = sentiment.includes("POSITIVE") ? "sentiment-positive" :
+                                               sentiment.includes("NEGATIVE") ? "sentiment-negative" :
+                                               "sentiment-neutral";
 
                     item.innerHTML = `
-                        <div class="font-semibold">
-                            <a href="${a.url}" target="_blank" class="hover:underline">
+                        <div class="flex justify-between items-start mb-2">
+                            <a href="${a.url}" target="_blank" class="font-semibold text-gray-900 hover:text-purple-600 transition-colors flex-1">
                                 ${a.title}
                             </a>
+                            <span class="sentiment-badge ${sentimentBadgeClass}">
+                                ${sentiment || "—"}
+                            </span>
                         </div>
-                        <div class="text-xs text-gray-500">
-                            ${a.source} – ${a.published_at}
+                        <div class="text-xs text-gray-500 mb-2">
+                            <i class="fas fa-building"></i> ${a.source} • 
+                            <i class="fas fa-clock"></i> ${a.published_at ? new Date(a.published_at).toLocaleDateString() : ""}
                         </div>
-                        <div class="mt-1 text-sm">${a.summary || ""}</div>
-                        <div class="mt-1 text-xs">
-                            <span class="font-semibold">Sentiment:</span>
-                            ${a.sentiment_label || "—"} (${sentimentScore})
-                        </div>
-                        <div class="text-xs text-gray-600">${a.topics || ""}</div>
+                        ${a.summary ? `<div class="text-sm text-gray-700 mb-2">${a.summary}</div>` : ""}
+                        ${a.topics ? `<div class="text-xs text-gray-600">
+                            <i class="fas fa-tags"></i> ${a.topics}
+                        </div>` : ""}
                     `;
                     el.appendChild(item);
                 });
@@ -645,9 +1091,7 @@
             }
         }
 
-        // --------------------------------------------------------------------
-        // INIT: load everything on page load
-        // --------------------------------------------------------------------
+        // Initialize all components
         loadMacroSnapshot();
         loadSPXVixChart();
         loadCPIChart();
@@ -658,6 +1102,13 @@
         loadVixChart();
         loadPrediction();
         loadNews();
+
+        // Auto-refresh every 5 minutes
+        setInterval(() => {
+            loadMacroSnapshot();
+            loadPrediction();
+            loadNews();
+        }, 300000);
     </script>
 </body>
 </html>

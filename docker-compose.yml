@@ -1,0 +1,60 @@
+services:
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_DB: marketpulse
+      POSTGRES_USER: marketpulse_user
+      POSTGRES_PASSWORD: marketpulse_password
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U marketpulse_user"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build: .
+    command: gunicorn --bind 0.0.0.0:8000 --workers 3 server.wsgi:application
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+    ports:
+      - "8000:8000"
+    environment:
+      - DJANGO_SECRET_KEY=${DJANGO_SECRET_KEY:-django-insecure-change-me}
+      - DEBUG=${DEBUG:-True}
+      - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
+      - FRED_API_KEY=${FRED_API_KEY}
+      - NEWSAPI_KEY=${NEWSAPI_KEY}
+      - DATABASE_URL=postgresql://marketpulse_user:marketpulse_password@db:5432/marketpulse
+    depends_on:
+      db:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # Automated data updates (runs daily at 6 AM UTC)
+  scheduler:
+    build: .
+    command: >
+      sh -c "echo '0 6 * * * cd /app && python manage.py update_marketpulse >> /app/logs/cron.log 2>&1' | crontab - && 
+             mkdir -p /app/logs && 
+             crond -f -l 2"
+    volumes:
+      - .:/app
+      - static_volume:/app/staticfiles
+    environment:
+      - FRED_API_KEY=${FRED_API_KEY}
+      - NEWSAPI_KEY=${NEWSAPI_KEY}
+      - DATABASE_URL=postgresql://marketpulse_user:marketpulse_password@db:5432/marketpulse
+    depends_on:
+      db:
+        condition: service_healthy
+      web:
+        condition: service_started
+    restart: unless-stopped
+
+volumes:
+  postgres_data:
+  static_volume:
+

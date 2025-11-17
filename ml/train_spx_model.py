@@ -49,7 +49,12 @@ def train_spx_direction_model() -> None:
     X = df[feature_cols].values
     y = df["label"].values
 
-    X_train, X_test, y_train, y_test = train_test_split(X, y, test_size = 42, random_state = 42, stratify = y)
+    # Use 20% for testing, ensuring we use all available data for training
+    # For very large datasets, this gives us a substantial test set while maximizing training data
+    test_size = 0.2
+    X_train, X_test, y_train, y_test = train_test_split(
+        X, y, test_size=test_size, random_state=42, stratify=y
+    )
 
     model = LogisticRegression(max_iter = 1000)
     model.fit(X_train, y_train)

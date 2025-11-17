@@ -5,7 +5,7 @@ from etl.markets import run_markets_etl
 from etl.features import build_features_for_all_dates
 
 # 👇 IMPORTANT: use the NewsAPI-based ETL, not the RSS one
-from etl.news_api import run_news_etl as run_newsapi_etl
+from etl.news_api import run_news_etl_newsapi
 
 from ml.train_spx_model import train_spx_direction_model
 from ml.news_nlp import run_news_nlp
@@ -63,9 +63,8 @@ class Command(BaseCommand):
         # 5) News ETL (NewsAPI, from etl/news_api.py)
         self.stdout.write(self.style.MIGRATE_HEADING("5) News ETL (NewsAPI)"))
         try:
-            # Call the NewsAPI ETL. Adjust arguments to match your news_api.run_news_etl signature.
-            # Safe version: only pass limit.
-            run_newsapi_etl(limit=25)
+            # Call the NewsAPI ETL with page_size parameter
+            run_news_etl_newsapi(page_size=25)
             self.stdout.write(self.style.SUCCESS("   ✓ News ETL completed."))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"   ✗ News ETL failed: {e}"))
