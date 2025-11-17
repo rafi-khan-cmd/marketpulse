@@ -27,7 +27,17 @@ NEWSAPI_KEY = os.getenv("NEWSAPI_KEY", "")
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = os.getenv("DEBUG", "True").lower() == "true"
 
-ALLOWED_HOSTS = os.getenv("ALLOWED_HOSTS", "").split(",") if os.getenv("ALLOWED_HOSTS") else []
+# ALLOWED_HOSTS: Allow Railway domains by default, or use environment variable
+allowed_hosts_env = os.getenv("ALLOWED_HOSTS", "")
+if allowed_hosts_env:
+    ALLOWED_HOSTS = [h.strip() for h in allowed_hosts_env.split(",") if h.strip()]
+else:
+    # Default: allow all hosts when DEBUG=False (for Railway deployment)
+    # In production, Railway sets ALLOWED_HOSTS via environment variable
+    if not DEBUG:
+        ALLOWED_HOSTS = ["*"]  # Allow all hosts in production (Railway handles routing)
+    else:
+        ALLOWED_HOSTS = ["localhost", "127.0.0.1", "0.0.0.0"]
 
 
 # Application definition
