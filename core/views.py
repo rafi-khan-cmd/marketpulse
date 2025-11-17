@@ -297,6 +297,24 @@ class NewsListView(APIView):
         )
 
 
+class MigrateView(APIView):
+    """
+    Endpoint to run database migrations. Visit this first!
+    """
+    def get(self, request, *args, **kwargs):
+        try:
+            call_command('migrate', verbosity=0)
+            return Response({
+                "status": "success",
+                "message": "Migrations completed successfully!"
+            })
+        except Exception as e:
+            return Response({
+                "status": "error",
+                "message": f"Migration failed: {str(e)}"
+            }, status=500)
+
+
 class UpdateDataView(APIView):
     """
     Simple endpoint to trigger data update. Just visit this URL in your browser!
