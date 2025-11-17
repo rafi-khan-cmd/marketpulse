@@ -297,6 +297,62 @@ class NewsListView(APIView):
         )
 
 
+class StatusView(APIView):
+    """
+    Check what data is loaded and what's missing.
+    """
+    def get(self, request, *args, **kwargs):
+        import os
+        from django.db.models import Count
+        
+        status = {
+            "environment": {
+                "FRED_API_KEY": "SET" if os.getenv("FRED_API_KEY") else "MISSING",
+                "NEWSAPI_KEY": "SET" if os.getenv("NEWSAPI_KEY") else "MISSING (optional)",
+                "DATABASE_URL": "SET" if os.getenv("DATABASE_URL") else "MISSING",
+            },
+            "data": {}
+        }
+        
+        # Check market data
+        try:
+            spx_series = Series.objects.filter(code="SPX_CLOSE").first()
+            if spx_series:
+                spx_count = Observation.objects.filter(series=spx_series).count()
+                status["data"]["SPX"] = spx_count
+            else:
+                status["data"]["SPX"] = 0
+        except:
+            status["data"]["SPX"] = "ERROR"
+        
+        # Check FRED data
+        try:
+            cpi_series = Series.objects.filter(code="CPI").first()
+            if cpi_series:
+                cpi_count = Observation.objects.filter(series=cpi_series).count()
+                status["data"]["CPI"] = cpi_count
+            else:
+                status["data"]["CPI"] = 0
+        except:
+            status["data"]["CPI"] = "ERROR"
+        
+        # Check features
+        try:
+            feature_count = FeatureFrame.objects.count()
+            status["data"]["FeatureFrame"] = feature_count
+        except:
+            status["data"]["FeatureFrame"] = "ERROR"
+        
+        # Check news
+        try:
+            news_count = NewsArticle.objects.count()
+            status["data"]["News"] = news_count
+        except:
+            status["data"]["News"] = "ERROR"
+        
+        return Response(status)
+
+
 class MigrateView(APIView):
     """
     Endpoint to run database migrations. Visit this first!
