@@ -2,8 +2,10 @@
 NLP utilities for NewsArticle:
 - sentiment (positive/negative/neutral + score)
 - abstractive summary
-- optional topic tags (zero-shot, if model can be loaded)
+- lightweight topic tagging (keyword-based to avoid huge models)
 """
+
+import os
 
 from django.db import transaction
 from transformers import pipeline
@@ -16,7 +18,17 @@ from core.models import NewsArticle
 # These start as None and are created on first use.
 _sentiment_pipe = None
 _summary_pipe = None
-_zs_pipe = None  # zero-shot (topics), optional
+
+# Allow overriding via env vars in case we ever want to experiment without
+# touching code. Using distilled models keeps memory usage low on Railway.
+SENTIMENT_MODEL = os.getenv(
+    "NEWS_SENTIMENT_MODEL",
+    "distilbert/distilbert-base-uncased-finetuned-sst-2-english",
+)
+SUMMARY_MODEL = os.getenv(
+    "NEWS_SUMMARY_MODEL",
+    "sshleifer/distilbart-cnn-12-6",  # distilled BART (~300MB vs 1.6GB)
+)
 
 
 def get_pipelines():
@@ -25,55 +37,54 @@ def get_pipelines():
 
     - sentiment analysis (always used)
     - summarization (always used)
-    - zero-shot classification (for topics, OPTIONAL)
 
-    If the zero-shot model cannot be loaded (e.g., no internet,
-    blocked HF, etc.), we set _zs_pipe = None and continue.
+    Avoid loading massive zero-shot topic models to stay within
+    Railway/Render free tier memory budgets.
     """
-    global _sentiment_pipe, _summary_pipe, _zs_pipe
+    global _sentiment_pipe, _summary_pipe
 
     # 1) Sentiment pipeline
     if _sentiment_pipe is None:
-        # Uses a default sentiment model: distilbert-base-uncased-finetuned-sst-2-english
-        _sentiment_pipe = pipeline("sentiment-analysis")
+        _sentiment_pipe = pipeline("sentiment-analysis", model=SENTIMENT_MODEL)
 
-    # 2) Summarization pipeline
+    # 2) Summarization pipeline (distilled BART)
     if _summary_pipe is None:
-        # BART CNN summarization model (large but good quality)
-        _summary_pipe = pipeline("summarization", model="facebook/bart-large-cnn")
+        _summary_pipe = pipeline(
+            "summarization",
+            model=SUMMARY_MODEL,
+            framework="pt",
+        )
 
-    # 3) Zero-shot (topics) pipeline — OPTIONAL
-    if _zs_pipe is None:
-        try:
-            _zs_pipe = pipeline(
-                "zero-shot-classification",
-                model="facebook/bart-large-mnli",
-            )
-        except Exception as e:
-            # IMPORTANT: Do NOT crash the whole NLP step because topics failed.
-            print(
-                "Could not load zero-shot topics model. "
-                "Topics will be left empty. Reason:", e
-            )
-            _zs_pipe = None
-
-    return _sentiment_pipe, _summary_pipe, _zs_pipe
+    return _sentiment_pipe, _summary_pipe
 
 
-# --- 2. Topic labels we would like to detect (if zero-shot works) ----------
+# --- 2. Topic inference via simple keyword rules ---------------------------
 
-TOPIC_LABELS = [
-    "inflation",
-    "interest rates",
-    "jobs",
-    "labor market",
-    "earnings",
-    "recession",
-    "growth",
-    "stocks",
-    "bonds",
-    "central bank",
-]
+TOPIC_KEYWORDS = {
+    "inflation": ["inflation", "cpi", "prices", "costs"],
+    "interest rates": ["interest rate", "rate hike", "rate cut", "fed funds"],
+    "jobs": ["employment", "jobless", "jobs report", "labor"],
+    "earnings": ["earnings", "profits", "quarterly results"],
+    "recession": ["recession", "slowdown", "contraction"],
+    "growth": ["gdp", "growth", "expansion"],
+    "stocks": ["stock", "equities", "market"],
+    "bonds": ["bond", "treasury", "yield"],
+    "central bank": ["federal reserve", "fed", "central bank"],
+    "commodities": ["oil", "gold", "commodity", "energy"],
+}
+
+
+def infer_topics(text: str) -> str:
+    """
+    Very light-weight topic tagging that looks for keyword hits.
+    Keeps resource usage near-zero compared to zero-shot models.
+    """
+    lower = text.lower()
+    hits = []
+    for topic, keywords in TOPIC_KEYWORDS.items():
+        if any(keyword in lower for keyword in keywords):
+            hits.append(topic)
+    return ", ".join(sorted(set(hits)))
 
 
 def annotate_article_text(text: str):
@@ -84,31 +95,24 @@ def annotate_article_text(text: str):
     - summary          (short abstractive summary)
     - topics_str       (comma-separated topics or '' if not available)
     """
-    sentiment_pipe, summary_pipe, zs_pipe = get_pipelines()
+    sentiment_pipe, summary_pipe = get_pipelines()
 
-    # 1) Sentiment — we truncate text to keep it cheap
+    # 1) Sentiment — truncate text to keep it cheap
     s_res = sentiment_pipe(text[:512])[0]
     sentiment_label = s_res["label"]
     sentiment_score = float(s_res["score"])
 
-    # 2) Summary — works even for short text, but best with a bit more content
+    # 2) Summary — distilled BART keeps memory modest while
+    # still producing decent summaries.
     sum_res = summary_pipe(
         text,
-        max_length=60,
-        min_length=15,
+        max_length=80,
+        min_length=20,
         do_sample=False,
     )[0]["summary_text"]
 
-    # 3) Topics — only if zero-shot pipeline loaded successfully
-    if zs_pipe is not None:
-        zs_res = zs_pipe(text, TOPIC_LABELS, multi_label=True)
-        labels = zs_res["labels"]
-        scores = zs_res["scores"]
-        # Keep topics with reasonably high score (e.g. >= 0.3)
-        tagged = [lab for lab, score in zip(labels, scores) if score >= 0.3]
-        topics_str = ", ".join(tagged)
-    else:
-        topics_str = ""
+    # 3) Topics — cheap keyword-based tags
+    topics_str = infer_topics(text)
 
     return sentiment_label, sentiment_score, sum_res, topics_str
 
@@ -116,7 +120,7 @@ def annotate_article_text(text: str):
 # --- 3. Main entry point: run NLP on NewsArticle rows ----------------------
 
 
-def run_news_nlp(limit: int = 50):
+def run_news_nlp(limit: int = 25):
     """
     Find NewsArticle rows that do not have sentiment yet,
     run NLP on them, and save the results.

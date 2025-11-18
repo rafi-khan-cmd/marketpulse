@@ -72,7 +72,7 @@ class Command(BaseCommand):
         # 6) News NLP (sentiment + topics)
         self.stdout.write(self.style.MIGRATE_HEADING("6) News NLP"))
         try:
-            run_news_nlp(limit=50)
+            run_news_nlp(limit=25)
             self.stdout.write(self.style.SUCCESS("   ✓ News NLP completed."))
         except Exception as e:
             self.stdout.write(self.style.ERROR(f"   ✗ News NLP failed: {e}"))
