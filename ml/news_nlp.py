@@ -135,13 +135,16 @@ def run_news_nlp(limit: int = 25):
         sentiment_label="",
     ).order_by("-published_at")[:limit]
 
-    if not qs:
+    # Convert to list to get actual count of limited results
+    articles_list = list(qs)
+    
+    if not articles_list:
         print("No articles need NLP right now.")
         return
 
-    print(f"Running NLP on {qs.count()} articles...")
+    print(f"Running NLP on {len(articles_list)} articles...")
 
-    for art in qs:
+    for art in articles_list:
         # If you later store full raw_text, use that; for now, title is fine.
         if art.raw_text:
             text = art.raw_text
