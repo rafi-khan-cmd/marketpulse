@@ -24,8 +24,15 @@ class SPXDirectionView(APIView):
     API endpoint that returns the latest SPX direction prediction.
     """
     def get(self, request, *args, **kwargs):
-        result = predict_latest_spx_direction()
-        return Response(result)
+        try:
+            result = predict_latest_spx_direction()
+            return Response(result)
+        except RuntimeError as e:
+            # Model not trained yet or other runtime error
+            return Response(
+                {"error": str(e), "message": "Model not available. Please run /api/update/ to train the model first."},
+                status=503,  # Service Unavailable
+            )
 
 
 class TimeSeriesView(APIView):
