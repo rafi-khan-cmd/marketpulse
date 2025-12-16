@@ -6,6 +6,7 @@ NLP utilities for NewsArticle:
 """
 
 import os
+import gc
 
 from django.db import transaction
 from transformers import pipeline
@@ -120,17 +121,18 @@ def annotate_article_text(text: str):
 # --- 3. Main entry point: run NLP on NewsArticle rows ----------------------
 
 
-def run_news_nlp(limit: int = 10):
+def run_news_nlp(limit: int = 5):
     """
     Find NewsArticle rows that do not have sentiment yet,
     run NLP on them, and save the results.
     
     Process articles one at a time to minimize memory usage and avoid OOM crashes.
+    Uses aggressive garbage collection to prevent SIGKILL on Railway free tier.
 
     Usage from Django shell:
 
         >>> from ml.news_nlp import run_news_nlp
-        >>> run_news_nlp(limit=10)
+        >>> run_news_nlp(limit=5)
     """
     # Only process articles where sentiment_label is still empty string.
     qs = NewsArticle.objects.filter(
@@ -149,7 +151,7 @@ def run_news_nlp(limit: int = 10):
     processed = 0
     failed = 0
 
-    for art in articles_list:
+    for i, art in enumerate(articles_list, 1):
         # If you later store full raw_text, use that; for now, title is fine.
         if art.raw_text:
             text = art.raw_text
@@ -166,7 +168,8 @@ def run_news_nlp(limit: int = 10):
         except Exception as e:
             print(f"Error processing article {art.id}: {e}")
             failed += 1
-            # Continue processing other articles even if one fails
+            # Force garbage collection after error
+            gc.collect()
             continue
 
         # Save fields atomically for this article
@@ -187,11 +190,20 @@ def run_news_nlp(limit: int = 10):
 
                 processed += 1
                 print(
-                    f"✓ Article {art.id}: {sentiment_label} ({sentiment_score:.2f}); topics={topics_str}"
+                    f"✓ Article {art.id} ({i}/{len(articles_list)}): {sentiment_label} ({sentiment_score:.2f}); topics={topics_str}"
                 )
         except Exception as e:
             print(f"Error saving article {art.id}: {e}")
             failed += 1
-            continue
+        finally:
+            # Aggressive garbage collection after each article to prevent OOM
+            gc.collect()
+            # Try to clear PyTorch cache if available
+            try:
+                import torch
+                if torch.cuda.is_available():
+                    torch.cuda.empty_cache()
+            except ImportError:
+                pass
 
     print(f"Done NLP processing. Processed: {processed}, Failed: {failed}")
