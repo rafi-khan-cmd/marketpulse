@@ -210,38 +210,6 @@
             transform: translateX(4px);
         }
         
-        .news-item.positive {
-            border-left-color: #16a34a;
-        }
-        
-        .news-item.negative {
-            border-left-color: #dc2626;
-        }
-        
-        .sentiment-badge {
-            display: inline-block;
-            padding: 0.25rem 0.75rem;
-            border-radius: 9999px;
-            font-size: 0.75rem;
-            font-weight: 600;
-            margin-left: 0.5rem;
-        }
-        
-        .sentiment-positive {
-            background: #d1fae5;
-            color: #065f46;
-        }
-        
-        .sentiment-negative {
-            background: #fee2e2;
-            color: #991b1b;
-        }
-        
-        .sentiment-neutral {
-            background: #e5e7eb;
-            color: #374151;
-        }
-        
         .loading {
             display: inline-block;
             width: 20px;
@@ -522,7 +490,7 @@
                             <i class="fas fa-newspaper"></i>
                             Market News
                         </div>
-                        <div class="card-sub">Latest headlines with sentiment analysis</div>
+                        <div class="card-sub">Latest headlines</div>
                     </div>
                 </div>
                 <div id="newsList" class="max-h-[600px] overflow-y-auto pr-2" style="scrollbar-width: thin;"></div>
@@ -1056,27 +1024,13 @@
 
                 (n.articles || []).forEach(a => {
                     const item = document.createElement("div");
-                    const sentiment = (a.sentiment_label || "").toUpperCase();
-                    const sentimentClass = sentiment.includes("POSITIVE") ? "positive" : 
-                                         sentiment.includes("NEGATIVE") ? "negative" : "";
-                    
-                    item.className = `news-item ${sentimentClass}`;
-                    
-                    const sentimentBadgeClass = sentiment.includes("POSITIVE") ? "sentiment-positive" :
-                                               sentiment.includes("NEGATIVE") ? "sentiment-negative" :
-                                               "sentiment-neutral";
-
-                    const sentimentScore = a.sentiment_score != null ? ` (${(a.sentiment_score * 100).toFixed(0)}%)` : "";
-                    const sentimentDisplay = sentiment ? `${sentiment}${sentimentScore}` : "No sentiment";
+                    item.className = "news-item";
                     
                     item.innerHTML = `
-                        <div class="flex justify-between items-start mb-2">
-                            <a href="${a.url}" target="_blank" class="font-semibold text-gray-900 hover:text-purple-600 transition-colors flex-1">
+                        <div class="mb-2">
+                            <a href="${a.url}" target="_blank" class="font-semibold text-gray-900 hover:text-purple-600 transition-colors">
                                 ${a.title}
                             </a>
-                            ${sentiment ? `<span class="sentiment-badge ${sentimentBadgeClass}">
-                                ${sentimentDisplay}
-                            </span>` : `<span class="sentiment-badge sentiment-neutral">No sentiment</span>`}
                         </div>
                         <div class="text-xs text-gray-500 mb-2">
                             <i class="fas fa-building"></i> ${a.source} • 
