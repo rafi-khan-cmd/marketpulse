@@ -1,8 +1,9 @@
 from typing import List, Dict, Any
 from datetime import date
+from io import BytesIO
 
 import numpy as np
-from joblib import loads
+import joblib
 
 from core.models import FeatureFrame, ModelArtifact
 
@@ -43,7 +44,10 @@ def load_model():
     if artifact is None:
         raise RuntimeError("No model artifact found in database. Train the model first.")
     
-    model = loads(artifact.data)
+    # Use BytesIO to deserialize model from bytes
+    buffer = BytesIO(artifact.data)
+    model = joblib.load(buffer)
+    buffer.close()
     return model
 
 def predict_latest_spx_direction() -> Dict[str, Any]:

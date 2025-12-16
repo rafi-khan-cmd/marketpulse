@@ -1,5 +1,5 @@
 from typing import List
-import os
+from io import BytesIO
 
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -8,12 +8,6 @@ from sklearn.metrics import accuracy_score
 import joblib
 
 from core.models import FeatureFrame, ModelArtifact
-
-# Use absolute path to ensure model is saved/loaded correctly
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_DIR = os.path.join(BASE_DIR, "models")
-os.makedirs(MODEL_DIR, exist_ok=True)
-MODEL_PATH = os.path.join(MODEL_DIR, "spx_direction_logreg.joblib")
 
 def load_featureframe_as_dataframe() -> pd.DataFrame:
     qs = FeatureFrame.objects.exclude(label__isnull = True).order_by("date")
@@ -69,7 +63,12 @@ def train_spx_direction_model() -> None:
     print(f"Test accuracy: {acc:.3f}")
 
     # Save model to database as binary blob for persistence
-    model_bytes = joblib.dumps(model)
+    # Use BytesIO to serialize model to bytes
+    buffer = BytesIO()
+    joblib.dump(model, buffer)
+    model_bytes = buffer.getvalue()
+    buffer.close()
+    
     ModelArtifact.objects.create(
         name="spx_direction_logreg",
         data=model_bytes,
