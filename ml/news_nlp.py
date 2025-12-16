@@ -100,8 +100,19 @@ def annotate_article_text(text: str):
 
     # 1) Sentiment — truncate text to keep it cheap
     s_res = sentiment_pipe(text[:512])[0]
-    sentiment_label = s_res["label"]
+    raw_label = s_res["label"]
     sentiment_score = float(s_res["score"])
+    
+    # Normalize sentiment labels to standard format
+    # DistilBERT SST-2 returns "POSITIVE" or "NEGATIVE", but some models return "LABEL_0"/"LABEL_1"
+    raw_label_upper = raw_label.upper()
+    if "POSITIVE" in raw_label_upper or raw_label == "LABEL_1":
+        sentiment_label = "POSITIVE"
+    elif "NEGATIVE" in raw_label_upper or raw_label == "LABEL_0":
+        sentiment_label = "NEGATIVE"
+    else:
+        # Fallback: use score to determine sentiment
+        sentiment_label = "POSITIVE" if sentiment_score > 0.5 else "NEGATIVE"
 
     # 2) Summary — distilled BART keeps memory modest while
     # still producing decent summaries.

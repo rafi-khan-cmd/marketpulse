@@ -1066,22 +1066,25 @@
                                                sentiment.includes("NEGATIVE") ? "sentiment-negative" :
                                                "sentiment-neutral";
 
+                    const sentimentScore = a.sentiment_score != null ? ` (${(a.sentiment_score * 100).toFixed(0)}%)` : "";
+                    const sentimentDisplay = sentiment ? `${sentiment}${sentimentScore}` : "No sentiment";
+                    
                     item.innerHTML = `
                         <div class="flex justify-between items-start mb-2">
                             <a href="${a.url}" target="_blank" class="font-semibold text-gray-900 hover:text-purple-600 transition-colors flex-1">
                                 ${a.title}
                             </a>
-                            <span class="sentiment-badge ${sentimentBadgeClass}">
-                                ${sentiment || "—"}
-                            </span>
+                            ${sentiment ? `<span class="sentiment-badge ${sentimentBadgeClass}">
+                                ${sentimentDisplay}
+                            </span>` : `<span class="sentiment-badge sentiment-neutral">No sentiment</span>`}
                         </div>
                         <div class="text-xs text-gray-500 mb-2">
                             <i class="fas fa-building"></i> ${a.source} • 
                             <i class="fas fa-clock"></i> ${a.published_at ? new Date(a.published_at).toLocaleDateString() : ""}
                         </div>
-                        ${a.summary ? `<div class="text-sm text-gray-700 mb-2">${a.summary}</div>` : ""}
+                        ${a.summary ? `<div class="text-sm text-gray-700 mb-2"><strong>Summary:</strong> ${a.summary}</div>` : ""}
                         ${a.topics ? `<div class="text-xs text-gray-600">
-                            <i class="fas fa-tags"></i> ${a.topics}
+                            <i class="fas fa-tags"></i> <strong>Topics:</strong> ${a.topics}
                         </div>` : ""}
                     `;
                     el.appendChild(item);
