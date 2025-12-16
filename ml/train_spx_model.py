@@ -1,4 +1,5 @@
 from typing import List
+import os
 
 import pandas as pd
 from sklearn.linear_model import LogisticRegression
@@ -8,7 +9,11 @@ import joblib
 
 from core.models import FeatureFrame
 
-MODEL_PATH = "models/spx_direction_logreg.joblib"
+# Use absolute path to ensure model is saved/loaded correctly
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODEL_DIR = os.path.join(BASE_DIR, "models")
+os.makedirs(MODEL_DIR, exist_ok=True)
+MODEL_PATH = os.path.join(MODEL_DIR, "spx_direction_logreg.joblib")
 
 def load_featureframe_as_dataframe() -> pd.DataFrame:
     qs = FeatureFrame.objects.exclude(label__isnull = True).order_by("date")

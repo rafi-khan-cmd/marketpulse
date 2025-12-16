@@ -1,12 +1,16 @@
 from typing import List, Dict, Any
 from datetime import date
+import os
 
 import numpy as np
 from joblib import load
 
 from core.models import FeatureFrame
 
-MODEL_PATH = "models/spx_direction_logreg.joblib"
+# Use absolute path to ensure model is loaded correctly
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+MODEL_DIR = os.path.join(BASE_DIR, "models")
+MODEL_PATH = os.path.join(MODEL_DIR, "spx_direction_logreg.joblib")
 
 FEATURE_COLS: List[str] = [
     "spx_close",
