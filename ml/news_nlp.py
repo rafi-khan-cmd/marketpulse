@@ -120,10 +120,12 @@ def annotate_article_text(text: str):
 # --- 3. Main entry point: run NLP on NewsArticle rows ----------------------
 
 
-def run_news_nlp(limit: int = 25):
+def run_news_nlp(limit: int = 10):
     """
     Find NewsArticle rows that do not have sentiment yet,
     run NLP on them, and save the results.
+    
+    Process articles one at a time to minimize memory usage and avoid OOM crashes.
 
     Usage from Django shell:
 
@@ -142,7 +144,10 @@ def run_news_nlp(limit: int = 25):
         print("No articles need NLP right now.")
         return
 
-    print(f"Running NLP on {len(articles_list)} articles...")
+    print(f"Running NLP on {len(articles_list)} articles (processing one at a time to save memory)...")
+
+    processed = 0
+    failed = 0
 
     for art in articles_list:
         # If you later store full raw_text, use that; for now, title is fine.
@@ -160,26 +165,33 @@ def run_news_nlp(limit: int = 25):
             ) = annotate_article_text(text)
         except Exception as e:
             print(f"Error processing article {art.id}: {e}")
+            failed += 1
+            # Continue processing other articles even if one fails
             continue
 
         # Save fields atomically for this article
-        with transaction.atomic():
-            art.sentiment_label = sentiment_label
-            art.sentiment_score = sentiment_score
-            art.summary = summary
-            art.topics = topics_str
-            art.save(
-                update_fields=[
-                    "sentiment_label",
-                    "sentiment_score",
-                    "summary",
-                    "topics",
-                ]
-            )
+        try:
+            with transaction.atomic():
+                art.sentiment_label = sentiment_label
+                art.sentiment_score = sentiment_score
+                art.summary = summary
+                art.topics = topics_str
+                art.save(
+                    update_fields=[
+                        "sentiment_label",
+                        "sentiment_score",
+                        "summary",
+                        "topics",
+                    ]
+                )
 
-            print(
-                f"Updated article {art.id}: "
-                f"{sentiment_label} ({sentiment_score:.2f}); topics={topics_str}"
-            )
+                processed += 1
+                print(
+                    f"✓ Article {art.id}: {sentiment_label} ({sentiment_score:.2f}); topics={topics_str}"
+                )
+        except Exception as e:
+            print(f"Error saving article {art.id}: {e}")
+            failed += 1
+            continue
 
-    print("Done NLP processing.")
+    print(f"Done NLP processing. Processed: {processed}, Failed: {failed}")

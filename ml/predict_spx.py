@@ -1,16 +1,12 @@
 from typing import List, Dict, Any
 from datetime import date
-import os
 
 import numpy as np
-from joblib import load
+from joblib import loads
 
-from core.models import FeatureFrame
+from core.models import FeatureFrame, ModelArtifact
 
-# Use absolute path to ensure model is loaded correctly
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MODEL_DIR = os.path.join(BASE_DIR, "models")
-MODEL_PATH = os.path.join(MODEL_DIR, "spx_direction_logreg.joblib")
+# Model is now stored in database, no file path needed
 
 FEATURE_COLS: List[str] = [
     "spx_close",
@@ -42,12 +38,12 @@ def extract_feature_vector(ff: FeatureFrame) -> np.ndarray:
     return np.array(values, dtype=float).reshape(1,-1)
 
 def load_model():
-    try:
-        model = load(MODEL_PATH)
-    except FileNotFoundError:
-        raise RuntimeError(
-            f"Model file not found at {MODEL_PATH}. Train the model first."
-        )
+    # Load latest model from database
+    artifact = ModelArtifact.objects.filter(name="spx_direction_logreg").order_by("-created_at").first()
+    if artifact is None:
+        raise RuntimeError("No model artifact found in database. Train the model first.")
+    
+    model = loads(artifact.data)
     return model
 
 def predict_latest_spx_direction() -> Dict[str, Any]:

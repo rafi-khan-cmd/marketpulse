@@ -74,7 +74,7 @@ class FeatureFrame(models.Model):
 
 class ModelArtifact(models.Model):
     name = models.CharField(max_length=64)
-    path = models.CharField(max_length=256)
+    data = models.BinaryField()  # Store serialized model as binary blob
     created_at = models.DateTimeField(auto_now_add=True)
     metrics = models.JSONField(default=dict)
 

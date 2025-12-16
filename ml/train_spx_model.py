@@ -7,7 +7,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 import joblib
 
-from core.models import FeatureFrame
+from core.models import FeatureFrame, ModelArtifact
 
 # Use absolute path to ensure model is saved/loaded correctly
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
@@ -68,5 +68,11 @@ def train_spx_direction_model() -> None:
     acc = accuracy_score(y_test, y_pred)
     print(f"Test accuracy: {acc:.3f}")
 
-    joblib.dump(model, MODEL_PATH)
-    print(f"Saved model to {MODEL_PATH}")
+    # Save model to database as binary blob for persistence
+    model_bytes = joblib.dumps(model)
+    ModelArtifact.objects.create(
+        name="spx_direction_logreg",
+        data=model_bytes,
+        metrics={"accuracy": acc},
+    )
+    print(f"Saved model to database with accuracy: {acc:.3f}")
