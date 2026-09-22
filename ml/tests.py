@@ -28,7 +28,7 @@ class MLPredictionTest(TestCase):
             label=1
         )
     
-    @patch('ml.predict_spx.load')
+    @patch('ml.predict_spx.load_model')
     @patch('ml.predict_spx.FeatureFrame')
     def test_predict_latest_spx_direction(self, mock_featureframe, mock_load):
         """Test SPX direction prediction."""

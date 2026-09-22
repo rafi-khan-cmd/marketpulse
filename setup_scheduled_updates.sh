@@ -41,9 +41,9 @@ cat > "$UPDATE_SCRIPT" << 'EOF'
 #!/bin/bash
 # MarketPulse automated data update script
 
-cd /Users/rafiulalamkhan/MarketPulseCursor/marketpulse
+cd "$(dirname "$0")"
 source venv/bin/activate
-export FRED_API_KEY="43e833b6295bbba47d543d7a70ff7b5c"
+export FRED_API_KEY="${FRED_API_KEY:?Set FRED_API_KEY in your environment or .env file}"
 export NEWSAPI_KEY="${NEWSAPI_KEY:-}"
 
 python manage.py update_marketpulse >> logs/update.log 2>&1

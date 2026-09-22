@@ -7,16 +7,23 @@ The dashboard is only as useful as its most recent data, so `update_marketpulse`
 The app exposes an update endpoint that runs the full pipeline:
 
 ```
-https://marketpulse-production-a407.up.railway.app/api/update/
+POST https://marketpulse-production-a407.up.railway.app/api/update/
 ```
+
+The endpoint is protected: it only accepts `POST`, and the request must carry an
+`X-Update-Token` header whose value matches the `UPDATE_API_TOKEN` environment
+variable set on the server. Set `UPDATE_API_TOKEN` to a long random string in
+your host's variables before scheduling. A second request while an update is
+already running returns `429` instead of starting a duplicate run.
 
 With [cron-job.org](https://cron-job.org) (free):
 
 1. Create an account and add a new cronjob.
-2. Set the address to the update endpoint above.
-3. Schedule it daily, ideally around 06:00 UTC when markets are closed and the previous day's data is settled.
+2. Set the address to the update endpoint above and the method to `POST`.
+3. Add a request header `X-Update-Token` with the same value as `UPDATE_API_TOKEN`.
+4. Schedule it daily, ideally around 06:00 UTC when markets are closed and the previous day's data is settled.
 
-[EasyCron](https://www.easycron.com) and [UptimeRobot](https://uptimerobot.com) work the same way.
+[EasyCron](https://www.easycron.com) and [UptimeRobot](https://uptimerobot.com) work the same way (POST + custom header).
 
 ## What the update does
 

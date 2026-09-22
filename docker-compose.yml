@@ -27,6 +27,7 @@ services:
       - ALLOWED_HOSTS=${ALLOWED_HOSTS:-localhost,127.0.0.1,0.0.0.0}
       - FRED_API_KEY=${FRED_API_KEY}
       - NEWSAPI_KEY=${NEWSAPI_KEY}
+      - UPDATE_API_TOKEN=${UPDATE_API_TOKEN}
       - DATABASE_URL=postgresql://marketpulse_user:marketpulse_password@db:5432/marketpulse
     depends_on:
       db:

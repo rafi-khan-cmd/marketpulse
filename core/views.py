@@ -8,8 +8,8 @@ from rest_framework.response import Response
 from core.models import Series, Observation, NewsArticle, FeatureFrame
 from ml.predict_spx import predict_latest_spx_direction
 from django.core.management import call_command
-from django.http import StreamingHttpResponse
 import threading
+import os
 
 
 class DashboardView(TemplateView):
@@ -133,81 +133,6 @@ def _compute_spx_drawdown(feature_date):
             drawdown = dd
 
     return drawdown
-
-
-def _compute_macro_heat_index(snapshot: dict):
-    """
-    Simple composite score ~0–100:
-    - Higher CPI YoY = hotter (above 2% target)
-    - Lower unemployment = hotter
-    - Steeper curve (10Y-2Y) = hotter
-    """
-    components = []
-
-    cpi_yoy = snapshot.get("cpi_yoy")
-    if cpi_yoy is not None:
-        # 2% is 'neutral'; 6%+ very hot, 0% cold
-        norm = (cpi_yoy - 2.0) / 4.0
-        components.append(max(min(norm, 2.0), -2.0))
-
-    unemp = snapshot.get("unemp_rate")
-    if unemp is not None:
-        # 4% is neutral; 3% very hot labour market, 7% cold
-        norm = (4.0 - unemp) / 2.0
-        components.append(max(min(norm, 2.0), -2.0))
-
-    ts = snapshot.get("term_spread_10y_2y")
-    if ts is not None:
-        # Positive steep curve is hot; inverted curve is cold
-        norm = ts * 5.0
-        components.append(max(min(norm, 2.0), -2.0))
-
-    if not components:
-        return None, "Unknown"
-
-    avg_norm = sum(components) / len(components)
-    score = avg_norm * 50.0 + 50.0  # map [-2,2] → [0,100]
-
-    if score >= 65:
-        label = "Hot / late-cycle"
-    elif score <= 35:
-        label = "Cool / slowdown"
-    else:
-        label = "Neutral"
-
-    return score, label
-
-
-def _compute_risk_barometer(snapshot: dict):
-    """
-    Risk barometer ~0–100:
-    Higher score = more stress / risk-off.
-    Uses VIX and SPX drawdown.
-    """
-    base = 50.0
-    vix = snapshot.get("vix")
-    dd = snapshot.get("spx_drawdown")  # negative when below peak
-
-    score = base
-
-    if vix is not None:
-        # Assume 20 is neutral. 30 = stressed, 15 = calm.
-        score += max(min((vix - 20.0) / 2.0, 10.0), -10.0)
-
-    if dd is not None:
-        # dd is negative. -0.2 (–20%) = stressed.
-        score += max(min(dd * -100.0 / 2.0, 10.0), -10.0)
-
-    score = max(min(score, 100.0), 0.0)
-
-    if score >= 65:
-        label = "Stress / risk-off"
-    elif score <= 35:
-        label = "Calm / risk-on"
-    else:
-        label = "Normal"
-
-    return score, label
 
 
 class MacroSnapshotView(APIView):
@@ -411,31 +336,55 @@ class MigrateView(APIView):
 
 class UpdateDataView(APIView):
     """
-    Simple endpoint to trigger data update. Just visit this URL in your browser!
+    Trigger a full data refresh. POST only, gated by X-Update-Token
+    matching the UPDATE_API_TOKEN environment variable. Concurrent
+    calls while a run is already in progress return 429.
     """
-    def get(self, request, *args, **kwargs):
-        import os
+    authentication_classes = []
+    permission_classes = []
+
+    _lock = threading.Lock()
+    _running = False
+
+    def post(self, request, *args, **kwargs):
         import logging
-        
-        # Set up logging to stdout so it appears in Railway logs
+
         logging.basicConfig(level=logging.INFO)
         logger = logging.getLogger(__name__)
-        
-        # Check environment variables first
+
+        expected = os.getenv("UPDATE_API_TOKEN", "")
+        provided = request.headers.get("X-Update-Token", "")
+        if not expected or provided != expected:
+            return Response(
+                {"status": "error", "message": "Unauthorized"},
+                status=401,
+            )
+
         missing_vars = []
         if not os.getenv("FRED_API_KEY"):
             missing_vars.append("FRED_API_KEY")
         if not os.getenv("DATABASE_URL"):
             missing_vars.append("DATABASE_URL")
-        
+
         if missing_vars:
             logger.error(f"Missing environment variables: {', '.join(missing_vars)}")
             return Response({
                 "status": "error",
-                "message": f"Missing environment variables: {', '.join(missing_vars)}. Check Railway Variables tab.",
+                "message": f"Missing environment variables: {', '.join(missing_vars)}.",
                 "missing": missing_vars
             }, status=400)
-        
+
+        with UpdateDataView._lock:
+            if UpdateDataView._running:
+                return Response(
+                    {
+                        "status": "busy",
+                        "message": "An update is already running. Try again later.",
+                    },
+                    status=429,
+                )
+            UpdateDataView._running = True
+
         def run_update():
             try:
                 logger.info("=" * 60)
@@ -444,10 +393,9 @@ class UpdateDataView(APIView):
                 logger.info(f"FRED_API_KEY: {'SET' if os.getenv('FRED_API_KEY') else 'MISSING'}")
                 logger.info(f"NEWSAPI_KEY: {'SET' if os.getenv('NEWSAPI_KEY') else 'MISSING (optional)'}")
                 logger.info(f"DATABASE_URL: {'SET' if os.getenv('DATABASE_URL') else 'MISSING'}")
-                
-                # Run the command with verbose output
+
                 call_command('update_marketpulse', verbosity=2)
-                
+
                 logger.info("=" * 60)
                 logger.info("MarketPulse Update COMPLETED")
                 logger.info("=" * 60)
@@ -458,16 +406,17 @@ class UpdateDataView(APIView):
                 logger.error(f"Error: {str(e)}")
                 import traceback
                 logger.error(traceback.format_exc())
-        
-        # Run in background thread so it doesn't timeout
+            finally:
+                with UpdateDataView._lock:
+                    UpdateDataView._running = False
+
         thread = threading.Thread(target=run_update)
-        thread.daemon = False  # Don't kill on main thread exit
+        thread.daemon = False
         thread.start()
-        
+
         return Response({
             "status": "started",
-            "message": "Data update started in background. Check Railway logs (Deployments → View Logs) to see progress. This will take 5-15 minutes.",
-            "check_logs": "Railway Dashboard → Your Service → Deployments → View Logs"
+            "message": "Data update started in background. This will take 5-15 minutes.",
         })
 
 # Helper functions for composite macro metrics

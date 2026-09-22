@@ -56,7 +56,6 @@ INSTALLED_APPS = [
     'rest_framework',
     'core',
     'etl',
-    'api',
 ]
 
 MIDDLEWARE = [

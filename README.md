@@ -39,6 +39,7 @@ pip install -r requirements.txt
 export FRED_API_KEY="your_fred_api_key"
 export NEWSAPI_KEY="your_newsapi_key"        # optional
 export DJANGO_SECRET_KEY="your_secret_key"   # generate a fresh one for production
+export UPDATE_API_TOKEN="a_long_random_string"  # required to call POST /api/update/
 
 python manage.py migrate
 python manage.py update_marketpulse          # fetches data, builds features, trains, pulls news
@@ -51,7 +52,6 @@ Then open http://127.0.0.1:8000/dashboard/.
 
 ```
 marketpulse/
-├── api/              # REST API endpoints
 ├── core/             # models, dashboard views, management commands
 │   ├── models.py     # Series, Observation, NewsArticle, FeatureFrame, ModelArtifact
 │   └── management/   # update_marketpulse, fetch_news
@@ -79,6 +79,7 @@ To keep the live dashboard current, `setup_scheduled_updates.sh` and `AUTO_UPDAT
 - `GET /api/macro-snapshot/` — latest macro snapshot
 - `GET /api/news/?limit=20` — latest news with sentiment/topics
 - `GET /api/spx-direction/` — latest SPX direction prediction
+- `POST /api/update/` — run the full pipeline (requires `X-Update-Token` matching `UPDATE_API_TOKEN`)
 
 ## Tests
 
