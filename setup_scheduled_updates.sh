@@ -3,13 +3,13 @@
 # Setup script for automated data updates
 # This creates a cron job to update MarketPulse data regularly
 
-echo "🔄 MarketPulse Automated Updates Setup"
+echo "MarketPulse Automated Updates Setup"
 echo "======================================"
 echo ""
 
 # Check if running in Docker
 if [ -f /.dockerenv ] || [ -n "$DOCKER_CONTAINER" ]; then
-    echo "📦 Detected Docker environment"
+    echo "Detected Docker environment"
     echo ""
     echo "For Docker, you have two options:"
     echo ""
@@ -30,7 +30,7 @@ echo ""
 
 # Check if virtual environment exists
 if [ ! -d "$VENV_PATH" ]; then
-    echo "❌ Virtual environment not found at $VENV_PATH"
+    echo "Virtual environment not found at $VENV_PATH"
     echo "Please create it first: python3 -m venv venv"
     exit 1
 fi
@@ -54,7 +54,7 @@ chmod +x "$UPDATE_SCRIPT"
 # Create logs directory
 mkdir -p "$PROJECT_DIR/logs"
 
-echo "✅ Created update script: $UPDATE_SCRIPT"
+echo "Created update script: $UPDATE_SCRIPT"
 echo ""
 
 # Ask user for update frequency
@@ -107,17 +107,17 @@ esac
 (crontab -l 2>/dev/null | grep -v "$UPDATE_SCRIPT"; echo "$CRON_SCHEDULE $UPDATE_SCRIPT") | crontab -
 
 echo ""
-echo "✅ Scheduled task added!"
+echo "Scheduled task added!"
 echo "   Schedule: $DESC"
 echo "   Command: $UPDATE_SCRIPT"
 echo ""
-echo "📋 View scheduled tasks:"
+echo "View scheduled tasks:"
 echo "   crontab -l"
 echo ""
-echo "📝 View update logs:"
+echo "View update logs:"
 echo "   tail -f $PROJECT_DIR/logs/update.log"
 echo ""
-echo "🛑 Remove scheduled task:"
+echo "Remove scheduled task:"
 echo "   crontab -e  (then delete the line)"
 echo ""
 

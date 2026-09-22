@@ -1,243 +1,98 @@
-# MarketPulse 📈
+# MarketPulse
 
-A comprehensive financial market analysis platform that combines macroeconomic data, market indicators, news sentiment analysis, and machine learning predictions to provide real-time insights into market trends.
+A financial-market analysis platform that pulls together macroeconomic data, market indicators, and business news, runs NLP over the headlines, and trains a model to predict the next-day direction of the S&P 500. Everything is wired into a Django app with an interactive dashboard.
 
-## 🎯 Project Overview
+**Live demo:** https://marketpulse-production-a407.up.railway.app/dashboard/
 
-MarketPulse is a full-stack Django application that aggregates data from multiple sources (FRED, Yahoo Finance, NewsAPI) and uses machine learning and NLP to analyze and predict market movements. The platform features an interactive dashboard with real-time visualizations of economic indicators, market trends, and news sentiment.
+## What it does
 
-## ✨ Key Features
+**ETL** — Scheduled pipelines fetch economic indicators from the FRED API (CPI, unemployment, interest rates, term spread), market data from Yahoo Finance (S&P 500, VIX, volume), and business headlines from NewsAPI.
 
-### Data Integration & ETL
-- **Economic Data**: Automated ETL pipeline fetching indicators from FRED API (CPI, unemployment, interest rates, etc.)
-- **Market Data**: Real-time market data from Yahoo Finance (S&P 500, VIX, trading volume)
-- **News Aggregation**: Business news headlines from NewsAPI with automated processing
+**Feature engineering** — Raw series are combined into feature frames, including composite indicators like a Macro Heat Index and a Risk Barometer.
 
-### Machine Learning
-- **SPX Direction Prediction**: Logistic regression model predicting next-day S&P 500 direction
-- **Feature Engineering**: Composite indicators including Macro Heat Index and Risk Barometer
-- **Model Training**: Automated retraining pipeline with performance metrics
+**Machine learning** — A logistic-regression model predicts whether the S&P 500 will close up or down the next day, with an automated retraining step. Current test accuracy is around 62% (a coin flip is 50%).
 
-### Natural Language Processing
-- **Sentiment Analysis**: Real-time sentiment classification of news articles using Hugging Face transformers
-- **Text Summarization**: Automatic abstractive summarization of news headlines
-- **Topic Extraction**: Zero-shot classification to identify relevant topics (inflation, interest rates, earnings, etc.)
+**NLP** — News articles are run through Hugging Face transformers for sentiment classification, abstractive summarization, and zero-shot topic tagging (inflation, interest rates, earnings, and so on).
 
-### Interactive Dashboard
-- **Real-time Visualizations**: Multiple Chart.js charts showing market trends, economic indicators, and yield curves
-- **Macro Snapshot**: Composite metrics including Macro Heat Index and Risk Barometer
-- **News Feed**: Latest business news with sentiment scores and topic tags
-- **ML Predictions**: Real-time SPX direction predictions with probability scores
+**Dashboard** — A single-page dashboard (Chart.js + Tailwind) shows market trends, the macro snapshot, the news feed with sentiment/topics, and the latest direction prediction with its probability.
 
-### RESTful API
-- Time series data endpoints
-- Macro snapshot API
-- News listing API
-- SPX direction prediction API
+## Stack
 
-## 🛠️ Tech Stack
+- **Backend:** Django 5.1, Django REST Framework, SQLite (swappable for Postgres)
+- **Data/ML:** pandas, numpy, scikit-learn, joblib
+- **NLP:** Hugging Face transformers on PyTorch
+- **Data sources:** yfinance, FRED API, NewsAPI
+- **Frontend:** Chart.js, Tailwind CSS
+- **Deploy:** Docker / docker-compose, Railway (`railway.json`), Render (`render.yaml`)
 
-### Backend
-- **Django 5.1.6**: Web framework
-- **Django REST Framework**: API development
-- **SQLite**: Database (easily configurable for PostgreSQL/MySQL)
+## Quick start
 
-### Data Science & ML
-- **pandas**: Data manipulation and analysis
-- **numpy**: Numerical computing
-- **scikit-learn**: Machine learning (logistic regression)
-- **joblib**: Model serialization
+You'll need a free [FRED API key](https://fred.stlouisfed.org/docs/api/api_key.html) and optionally a [NewsAPI key](https://newsapi.org/).
 
-### NLP
-- **transformers (Hugging Face)**: Pre-trained models for sentiment analysis and summarization
-- **PyTorch**: Deep learning backend
-
-### Data Sources
-- **yfinance**: Market data (S&P 500, VIX, volume)
-- **FRED API**: Economic indicators
-- **NewsAPI**: Business news headlines
-
-### Frontend
-- **Chart.js**: Interactive data visualizations
-- **Tailwind CSS**: Modern, responsive UI
-
-## 📋 Prerequisites
-
-- Python 3.11+
-- pip
-- FRED API key (free at https://fred.stlouisfed.org/docs/api/api_key.html)
-- NewsAPI key (optional, free tier available at https://newsapi.org/)
-
-## 🚀 Quick Start
-
-### 1. Clone the Repository
 ```bash
-git clone <repository-url>
+git clone https://github.com/rafi-khan-cmd/marketpulse.git
 cd marketpulse
-```
 
-### 2. Set Up Virtual Environment
-```bash
-python3 -m venv venv
-source venv/bin/activate  # On Windows: venv\Scripts\activate
-```
-
-### 3. Install Dependencies
-```bash
+python3 -m venv venv && source venv/bin/activate   # Windows: venv\Scripts\activate
 pip install -r requirements.txt
-```
 
-### 4. Set Environment Variables
-```bash
 export FRED_API_KEY="your_fred_api_key"
-export NEWSAPI_KEY="your_newsapi_key"  # Optional
-export DJANGO_SECRET_KEY="your_secret_key"  # Generate a new one for production
-```
+export NEWSAPI_KEY="your_newsapi_key"        # optional
+export DJANGO_SECRET_KEY="your_secret_key"   # generate a fresh one for production
 
-### 5. Run Migrations
-```bash
 python manage.py migrate
-```
-
-### 6. Fetch Data and Train Model
-```bash
-python manage.py update_marketpulse
-```
-
-This command will:
-- Fetch economic data from FRED
-- Fetch market data from Yahoo Finance
-- Build feature frames
-- Train the ML model
-- Fetch and process news articles
-
-### 7. Start Development Server
-```bash
+python manage.py update_marketpulse          # fetches data, builds features, trains, pulls news
 python manage.py runserver
 ```
 
-### 8. Access Dashboard
-Open http://127.0.0.1:8000/dashboard/ in your browser
+Then open http://127.0.0.1:8000/dashboard/.
 
-## 📁 Project Structure
+## Project structure
 
 ```
 marketpulse/
-├── api/              # API endpoints
-├── core/             # Core models and views
-│   ├── models.py     # Database models (Series, Observation, NewsArticle, FeatureFrame)
-│   ├── views.py      # Dashboard and API views
-│   └── management/   # Django management commands
-├── etl/              # ETL pipelines
-│   ├── fred.py       # FRED API integration
-│   ├── markets.py    # Yahoo Finance integration
-│   ├── news_api.py   # NewsAPI integration
-│   └── features.py   # Feature engineering
-├── ml/               # Machine learning
-│   ├── train_spx_model.py  # Model training
-│   ├── predict_spx.py      # Prediction logic
-│   └── news_nlp.py         # NLP processing
-├── server/           # Django settings and configuration
-├── models/           # Trained ML model artifacts
-└── requirements.txt  # Python dependencies
+├── api/              # REST API endpoints
+├── core/             # models, dashboard views, management commands
+│   ├── models.py     # Series, Observation, NewsArticle, FeatureFrame, ModelArtifact
+│   └── management/   # update_marketpulse, fetch_news
+├── etl/              # ETL: fred.py, markets.py, news_api.py, features.py
+├── ml/               # train_spx_model.py, predict_spx.py, news_nlp.py
+├── server/           # Django settings
+├── Dockerfile, docker-compose.yml, railway.json, render.yaml
+└── requirements.txt
 ```
 
-## 🔧 Management Commands
+The trained model is serialized and stored in the database as a `ModelArtifact` row, so there's no separate model file to track.
 
-### Update All Data
+## Management commands
+
 ```bash
-python manage.py update_marketpulse
+python manage.py update_marketpulse   # full pipeline: ETL, features, training, news
+python manage.py fetch_news           # news + NLP refresh only
 ```
-Runs the complete ETL pipeline, feature engineering, model training, and news processing.
 
-### Fetch News Only
+To keep the live dashboard current, `setup_scheduled_updates.sh` and `AUTO_UPDATE_SETUP.md` show how to run `update_marketpulse` on a daily schedule (cron or a hosted cron service).
+
+## API
+
+- `GET /api/timeseries/?code=SPX_CLOSE` — time series for a series code
+- `GET /api/macro-snapshot/` — latest macro snapshot
+- `GET /api/news/?limit=20` — latest news with sentiment/topics
+- `GET /api/spx-direction/` — latest SPX direction prediction
+
+## Tests
+
 ```bash
-python manage.py fetch_news
-```
-Fetches latest news and runs NLP processing.
-
-## 📊 API Endpoints
-
-- `GET /api/timeseries/?code=SPX_CLOSE` - Get time series data for a series code
-- `GET /api/macro-snapshot/` - Get latest macroeconomic snapshot
-- `GET /api/news/?limit=20` - Get latest news articles with NLP data
-- `GET /api/spx-direction/` - Get latest SPX direction prediction
-- `GET /dashboard/` - Interactive dashboard
-
-## 🧪 Testing
-
-The project includes comprehensive unit tests for models, views, ETL functions, and ML components.
-
-Run all tests:
-```bash
-python manage.py test
+python manage.py test                 # or: test core.tests / etl.tests / ml.tests
 ```
 
-Run specific test suites:
-```bash
-python manage.py test core.tests
-python manage.py test etl.tests
-python manage.py test ml.tests
-```
+Tests cover the models, API endpoints, feature engineering, ETL, and prediction logic.
 
-Test coverage includes:
-- Model creation and validation
-- API endpoint functionality
-- Feature engineering functions
-- ETL pipeline components
-- ML prediction logic
+## Notes on the model
 
-## 🔒 Security
+The direction model is deliberately simple — logistic regression over market and macro features. Predicting daily index direction is genuinely hard, so ~62% is a modest but honest edge over the 50% baseline. The point of the project was the end-to-end pipeline (ingest → features → train → serve → visualize), not squeezing out maximum accuracy.
 
-- **SECRET_KEY** is now loaded from environment variables (not hardcoded)
-- All API keys use environment variables
-- Production-ready security settings
-- See [DEPLOYMENT.md](DEPLOYMENT.md) for production security checklist
+## Author
 
-## 📈 Model Performance
-
-The SPX direction prediction model uses logistic regression with the following features:
-- Market indicators (SPX close, returns, VIX, volume)
-- Economic indicators (CPI, unemployment, interest rates, term spread)
-
-Current test accuracy: ~62% (baseline for binary classification: 50%)
-
-## 🚢 Deployment
-
-The project includes Docker support and comprehensive deployment documentation.
-
-### Quick Docker Deployment
-```bash
-docker-compose up -d
-```
-
-### Options Available
-- **Docker & Docker Compose**: Included with `Dockerfile` and `docker-compose.yml`
-- **Gunicorn + Nginx**: Traditional server deployment
-- **Cloud Platforms**: Heroku, Railway, AWS Elastic Beanstalk
-
-See [DEPLOYMENT.md](DEPLOYMENT.md) for detailed deployment instructions for all platforms.
-
-## 📝 License
-
-This project is open source and available for educational purposes.
-
-## 👤 Author
-
-Built as a portfolio project demonstrating:
-- Full-stack web development (Django, REST APIs)
-- Data engineering (ETL pipelines, feature engineering)
-- Machine learning (model training, prediction)
-- NLP (sentiment analysis, text summarization)
-- Data visualization (interactive dashboards)
-
-## 🤝 Contributing
-
-Contributions, issues, and feature requests are welcome!
-
-## 📚 Additional Resources
-
-- [Django Documentation](https://docs.djangoproject.com/)
-- [FRED API Documentation](https://fred.stlouisfed.org/docs/api/)
-- [Hugging Face Transformers](https://huggingface.co/docs/transformers)
-
+Rafiul Alam Khan
+[GitHub](https://github.com/rafi-khan-cmd) · [LinkedIn](https://www.linkedin.com/in/rafiul-alam-k-3a20392b0/) · alamkhanrafiul@gmail.com

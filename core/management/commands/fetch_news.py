@@ -108,5 +108,5 @@ class Command(BaseCommand):
             )
 
         self.stdout.write(
-            self.style.SUCCESS("All done. News + NLP refresh is complete ✅")
+            self.style.SUCCESS("All done. News + NLP refresh is complete ")
         )

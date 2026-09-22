@@ -1,8 +1,8 @@
 #!/bin/bash
 set -e
 
-echo "🚀 Starting MarketPulse container..."
-echo "🔍 Environment check:"
+echo "Starting MarketPulse container..."
+echo "Environment check:"
 echo "   FRED_API_KEY: ${FRED_API_KEY:+SET (length: ${#FRED_API_KEY})}"
 echo "   NEWSAPI_KEY: ${NEWSAPI_KEY:+SET (length: ${#NEWSAPI_KEY})}"
 echo "   DATABASE_URL: ${DATABASE_URL:+SET}"

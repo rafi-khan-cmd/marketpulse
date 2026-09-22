@@ -4,7 +4,7 @@ from etl.fred import run_fred_etl
 from etl.markets import run_markets_etl
 from etl.features import build_features_for_all_dates
 
-# 👇 IMPORTANT: use the NewsAPI-based ETL, not the RSS one
+# IMPORTANT: use the NewsAPI-based ETL, not the RSS one
 from etl.news_api import run_news_etl_newsapi
 
 from ml.train_spx_model import train_spx_direction_model
@@ -32,50 +32,50 @@ class Command(BaseCommand):
         self.stdout.write(self.style.MIGRATE_HEADING("1) FRED macro ETL"))
         try:
             run_fred_etl()
-            self.stdout.write(self.style.SUCCESS("   ✓ FRED ETL completed."))
+            self.stdout.write(self.style.SUCCESS("   FRED ETL completed."))
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f"   ✗ FRED ETL failed: {e}"))
+            self.stdout.write(self.style.ERROR(f"   FRED ETL failed: {e}"))
 
         # 2) Market ETL (yfinance)
         self.stdout.write(self.style.MIGRATE_HEADING("2) Market ETL (yfinance)"))
         try:
             run_markets_etl()
-            self.stdout.write(self.style.SUCCESS("   ✓ Market ETL completed."))
+            self.stdout.write(self.style.SUCCESS("   Market ETL completed."))
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f"   ✗ Market ETL failed: {e}"))
+            self.stdout.write(self.style.ERROR(f"   Market ETL failed: {e}"))
 
         # 3) Build FeatureFrame
         self.stdout.write(self.style.MIGRATE_HEADING("3) Build FeatureFrame"))
         try:
             build_features_for_all_dates()
-            self.stdout.write(self.style.SUCCESS("   ✓ Features built/updated."))
+            self.stdout.write(self.style.SUCCESS("   Features built/updated."))
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f"   ✗ Feature building failed: {e}"))
+            self.stdout.write(self.style.ERROR(f"   Feature building failed: {e}"))
 
         # 4) Train SPX direction model
         self.stdout.write(self.style.MIGRATE_HEADING("4) Train SPX direction model"))
         try:
             train_spx_direction_model()
-            self.stdout.write(self.style.SUCCESS("   ✓ Model trained and saved."))
+            self.stdout.write(self.style.SUCCESS("   Model trained and saved."))
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f"   ✗ Model training failed: {e}"))
+            self.stdout.write(self.style.ERROR(f"   Model training failed: {e}"))
 
         # 5) News ETL (NewsAPI, from etl/news_api.py)
         self.stdout.write(self.style.MIGRATE_HEADING("5) News ETL (NewsAPI)"))
         try:
             # Call the NewsAPI ETL with page_size parameter
             run_news_etl_newsapi(page_size=25)
-            self.stdout.write(self.style.SUCCESS("   ✓ News ETL completed."))
+            self.stdout.write(self.style.SUCCESS("   News ETL completed."))
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f"   ✗ News ETL failed: {e}"))
+            self.stdout.write(self.style.ERROR(f"   News ETL failed: {e}"))
 
         # 6) News NLP (sentiment + topics)
         self.stdout.write(self.style.MIGRATE_HEADING("6) News NLP"))
         try:
             # Process only 5 articles at a time to avoid OOM crashes on Railway free tier
             run_news_nlp(limit=5)
-            self.stdout.write(self.style.SUCCESS("   ✓ News NLP completed."))
+            self.stdout.write(self.style.SUCCESS("   News NLP completed."))
         except Exception as e:
-            self.stdout.write(self.style.ERROR(f"   ✗ News NLP failed: {e}"))
+            self.stdout.write(self.style.ERROR(f"   News NLP failed: {e}"))
 
-        self.stdout.write(self.style.SUCCESS("✅ MarketPulse update pipeline completed."))
+        self.stdout.write(self.style.SUCCESS("MarketPulse update pipeline completed."))

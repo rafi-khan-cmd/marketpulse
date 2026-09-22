@@ -201,7 +201,7 @@ def run_news_nlp(limit: int = 5):
 
                 processed += 1
                 print(
-                    f"✓ Article {art.id} ({i}/{len(articles_list)}): {sentiment_label} ({sentiment_score:.2f}); topics={topics_str}"
+                    f"Article {art.id} ({i}/{len(articles_list)}): {sentiment_label} ({sentiment_score:.2f}); topics={topics_str}"
                 )
         except Exception as e:
             print(f"Error saving article {art.id}: {e}")
